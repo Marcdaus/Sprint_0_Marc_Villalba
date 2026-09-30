@@ -125,7 +125,7 @@ verdad contra la tabla mediciones, asi que:
 
 	- MySQL tiene que estar encendido (XAMPP)
 	- la base de datos proyecto_beacon tiene que existir y tener la tabla
-	  mediciones. Eso es el PROMPT 5, todavia no esta hecho.
+	  mediciones. Eso es el PROMPT 5, mas abajo esta como se crea.
 
 Si no cumple esas dos cosas, POST guardarMedicion.php y
 GET recuperarMedicion.php responden 500.
@@ -134,18 +134,38 @@ La conexion sale de logica/configuracion.php: localhost, puerto 3306,
 usuario root, sin contraseña (los valores por defecto de XAMPP). Si los
 cambias, se cambian SOLO en ese fichero.
 
-6. QUE PRUEBAS SIGUEN SIENDO UTILES
-----------------------------------
-	php testLogicaDeNegocio.php   SI. Es la que hay que usar. No necesita
-	                              servidor, ni MySQL, ni curl: lleva su
-	                              propio PDO falso. Es la que comprueba las
-	                              reglas de negocio (RN1, RN2, RN3).
+6. BASE DE DATOS (PROMPT 5)
+---------------------------
+	baseDeDatos/crearBaseDeDatos.sql   el DDL: crea proyecto_beacon, la tabla
+	                                   mediciones y mete tres filas de ejemplo
 
-	php testEndpointsRest.php     NO de momento. Los endpoints ya usan la
-	                              logica de verdad, que necesita la base de
-	                              datos, y ademas este fichero espera los
-	                              datos fijos del stub (id 42). Rehacerlo
-	                              cuando haya base de datos.
+CREAR LA BASE DE DATOS, con phpMyAdmin (http://localhost/phpmyadmin):
+entra con el usuario root y sin contraseña, pestaña "Importar", elige el
+fichero baseDeDatos/crearBaseDeDatos.sql y dale a Continuar. Con eso ya
+existe la tabla y el movil puede empezar a guardar.
+
+Ojo: se puede volver a importar sin miedo, porque los CREATE son IF NOT
+EXISTS y no borran nada. Lo unico que se duplica son las tres filas de
+ejemplo del final. Para el valor del minor de la demo hay que cambiar
+@minorEjemplo, que esta en el bloque de VARIABLES MODIFICABLES del
+principio del fichero.
+
+7. QUE PRUEBAS SIGUEN SIENDO UTILES
+----------------------------------
+	php testLogicaDeNegocio.php   SI. No necesita servidor, ni MySQL, ni
+	                              curl: lleva su propio PDO falso. Comprueba
+	                              las reglas de negocio (RN1, RN2, RN3).
+
+	php testBaseDeDatos.php       SI, pero necesita MySQL encendido. Trabaja
+	                              sobre una base de datos desechable llamada
+	                              proyecto_beacon_test, le aplica el DDL real,
+	                              comprueba que el esquema es el correcto y
+	                              borra esa base al terminar. NO toca
+	                              proyecto_beacon, la de verdad.
+
+	php testEndpointsRest.php     NO de momento. Necesita la base de datos y
+	                              ademas espera los datos fijos del stub
+	                              (id 42). Rehacerlo cuando haya tabla.
 
 	php testAuxiliaresRest.php    NO. Esta roto, ver seccion 4.
 
@@ -153,6 +173,10 @@ cambias, se cambian SOLO en ese fichero.
 	                              encuentran la logica de verdad. Se puede
 	                              borrar cuando quieras; se ha dejado
 	                              puesto por si hay que volver atras.
+
+Para pasar las que si valen, de una vez:
+
+	php testLogicaDeNegocio.php && php testBaseDeDatos.php
 
 Comprobar la sintaxis de todos los ficheros:
 
@@ -163,3 +187,4 @@ Comprobar la sintaxis de todos los ficheros:
 	php -l rest\guardarMedicion.php
 	php -l rest\recuperarMedicion.php
 	php -l pruebas\testLogicaDeNegocio.php
+	php -l pruebas\testBaseDeDatos.php
