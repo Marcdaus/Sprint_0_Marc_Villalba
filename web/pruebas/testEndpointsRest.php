@@ -29,6 +29,25 @@
 //
 // ESTAS PRUEBAS NO LAS EJECUTA LA IA: las corre el propietario.
 //
+// ###########################################################################
+// #  ESTAS PRUEBAS AHORA NECESITAN LA BASE DE DATOS.                        #
+// #                                                                          #
+// # Antes (PROMPT 3) los endpoints usaban el stub de pruebas/, que           #
+// # devolvia datos fijos y no necesitaba MySQL. Desde el PROMPT 4 los        #
+// # endpoints usan la logica de negocio DE VERDAD, que hace un INSERT y      #
+// # un SELECT contra la tabla mediciones: sin la base de datos proyecto_beacon #
+// # (PROMPT 5) y sin MySQL encendido, responden 500 y estas pruebas fallan.  #
+// #                                                                          #
+// # Ademas, los valores que espera este fichero son los del stub (id 42, dos  #
+// # mediciones fijas), y la logica de verdad genera ids y filas de verdad,     #
+// # asi que hay que reescribir las comparaciones de aqui abajo.               #
+// #                                                                          #
+// # Para probar los endpoints AHORA MISMO, sin base de datos, hay que        #
+// # probar la logica: pruebas/testLogicaDeNegocio.php, que no necesita nada  #
+// # de esto. O bien rehacer estas pruebas para la logica de verdad, cuando    #
+// # haya base de datos.                                                      #
+// ###########################################################################
+//
 // QUE COMPRUEBA CADA UNA:
 //   - POST guardarMedicion con el JSON bueno   -> 200 {"ok":true,...}
 //   - POST guardarMedicion con JSON malformado -> 400

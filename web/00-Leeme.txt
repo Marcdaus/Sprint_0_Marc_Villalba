@@ -1,3 +1,36 @@
+0. REQUISITOS: HACE FALTA XAMPP
+-------------------------------
+En este equipo HABA PHP de verdad. Lo unico que habia era un php.exe
+suelto y roto dentro de una carpeta temporal, al que le faltaba el
+php8.dll, y por eso salia el error:
+
+	"no se ha encontrado el programa php8dill"
+
+Para que esto funcione hay que instalar XAMPP:
+
+	1) Descargarlo de https://www.apachefriends.org/es/index.html
+	2) Instalarlo. Hay que aceptarlo como administrador.
+	3) Abrir el panel de control de XAMPP y darle a "Start" al MySQL.
+	   El Apache no hace falta: el servidor de PHP se arranca a mano
+	   con php -S, como se explica mas abajo.
+	4) OJO: XAMPP NO mete PHP en el PATH del sistema. O sea, que despues
+	   de instalar, "php" en una consola seguira sin encontrarse.
+	   Comprobarlo con la ruta completa:
+
+		C:\xampp\php\php.exe -v
+
+	   Y si se quiere poder escribir solo "php", hay que anadir
+	   C:\xampp\php al PATH de las variables de entorno.
+
+La base de datos proyecto_beacon y la tabla mediciones las crea el
+PROMPT 5 con phpMyAdmin (http://localhost/phpmyadmin). Hasta entonces, los
+endpoints de rest/ responden 500 porque no hay donde escribir.
+
+Aviso: hay una extension de curl que hace falta para las pruebas de
+endpoints. XAMPP la trae activada de serie, asi que en principio no hay
+que tocar nada.
+
+
 1. Hay que arrancar un servidor http+php con este directorio como base.
 Por ejemplo:
 
@@ -72,15 +105,61 @@ Comprobar la sintaxis de un solo fichero:
 	php -l rest\guardarMedicion.php
 	php -l rest\recuperarMedicion.php
 
-5. STUB DE LA LOGICA DE NEGOCIO
--------------------------------
-Ahora mismo logica/ todavia NO tiene guardarMedicion() ni
-recuperarMedicion(): eso es del PROMPT 4. Para que los endpoints se puedan
-probar ya, cargan pruebas/stubLogicaDeNegocio.php, que es un sustituto
-que no guarda ni consulta nada de verdad.
+5. LOGICA DE NEGOCIO (PROMPT 4) - CUIDADO, NECESITA LA BASE DE DATOS
+---------------------------------------------------------------------
+La logica de negocio ya es la DE VERDAD, en logica/LogicaDeNegocio.php:
 
-En cuanto el PROMPT 4 ponga la logica de verdad en logica/, los endpoints
-la cargaran solos (estan preparados para eso) y el stub dejara de usarse:
-habra que BORRAR pruebas/stubLogicaDeNegocio.php, y reescribir
-pruebas/testEndpointsRest.php, porque el stub devuelve datos fijos y la
-logica de verdad validara el beacon y el minor.
+	logica/LogicaDeNegocio.php   las dos funciones publicas (RN1, RN2, RN3)
+	logica/configuracion.php     host, usuario, contraseña y nombre de la BD
+	logica/guardarMedicion.php   puntero: carga LogicaDeNegocio.php
+	logica/recuperarMedicion.php puntero: carga LogicaDeNegocio.php
+
+Los dos ficheros "puntero" estan porque los endpoints del PROMPT 3 buscan
+la logica en logica/guardarMedicion.php y logica/recuperarMedicion.php, y
+asi los endpoints no hay que tocarlos. Las dos funciones de verdad viven
+juntas en LogicaDeNegocio.php porque comparten la conexion y los helpers.
+
+AHORA LOS ENDPOINTS NECESITAN MySQL. Antes usaban el stub de pruebas/, que
+era tonto y no necesitaba base de datos. Ahora hacen INSERT y SELECT de
+verdad contra la tabla mediciones, asi que:
+
+	- MySQL tiene que estar encendido (XAMPP)
+	- la base de datos proyecto_beacon tiene que existir y tener la tabla
+	  mediciones. Eso es el PROMPT 5, todavia no esta hecho.
+
+Si no cumple esas dos cosas, POST guardarMedicion.php y
+GET recuperarMedicion.php responden 500.
+
+La conexion sale de logica/configuracion.php: localhost, puerto 3306,
+usuario root, sin contraseña (los valores por defecto de XAMPP). Si los
+cambias, se cambian SOLO en ese fichero.
+
+6. QUE PRUEBAS SIGUEN SIENDO UTILES
+----------------------------------
+	php testLogicaDeNegocio.php   SI. Es la que hay que usar. No necesita
+	                              servidor, ni MySQL, ni curl: lleva su
+	                              propio PDO falso. Es la que comprueba las
+	                              reglas de negocio (RN1, RN2, RN3).
+
+	php testEndpointsRest.php     NO de momento. Los endpoints ya usan la
+	                              logica de verdad, que necesita la base de
+	                              datos, y ademas este fichero espera los
+	                              datos fijos del stub (id 42). Rehacerlo
+	                              cuando haya base de datos.
+
+	php testAuxiliaresRest.php    NO. Esta roto, ver seccion 4.
+
+	stubLogicaDeNegocio.php       Ha dejado de usarse: los endpoints ya
+	                              encuentran la logica de verdad. Se puede
+	                              borrar cuando quieras; se ha dejado
+	                              puesto por si hay que volver atras.
+
+Comprobar la sintaxis de todos los ficheros:
+
+	php -l logica\LogicaDeNegocio.php
+	php -l logica\configuracion.php
+	php -l logica\guardarMedicion.php
+	php -l logica\recuperarMedicion.php
+	php -l rest\guardarMedicion.php
+	php -l rest\recuperarMedicion.php
+	php -l pruebas\testLogicaDeNegocio.php
