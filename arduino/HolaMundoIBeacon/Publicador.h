@@ -147,16 +147,16 @@ public:
 
   // ............................................................
   // ............................................................
-  // Publica el VALOR DEL PROYECTO como un iBeacon estandar: el
-  // valor viaja en el campo "minor" (int16).
-  // Recibe el valor, el contador de emision y el tiempo que se
-  // mantiene el anuncio; no devuelve nada.
-  // Mismo patron que publicarCO2(): emitir -> esperar -> detener.
-  // Ademas escribe por el puerto serie lo que emite, para poder
-  // seguir la emision desde el PC.
+  // valor: Z, contador: N --> publicarValor() -->
   // ............................................................
   // ............................................................
-  // valor: Z, contador: N, tiempoEspera: N --> publicarValor() -->
+  // Emite el valor del proyecto como un iBeacon y lo deja anunciando.
+  //
+  // OJO: aqui NO se espera con delay(). Antes se hacia "emitir -> esperar(1000)
+  // -> detener", y ese delay() tumbaba el micro durante toda la ventana de anuncio:
+  // la placa se quedaba callada mientras delay() corria. Ahora solo se arranca el
+  // anuncio y se devuelve enseguida; quien lo para es el loop(), al ver que ha
+  // pasado el intervalo. Asi el micro no para y los anuncios salen.
   // ............................................................
   // ............................................................
   void publicarValor( int16_t valor, uint8_t contador, long tiempoEspera ) {
@@ -179,7 +179,7 @@ public:
 	Globales::elPuerto.escribir( "\n" );
 
 	//
-	// 3. emitimos el beacon con el VALOR en el campo "minor"
+	// 3. emitimos el beacon con el VALOR en el campo "minor" y lo dejamos anunciando
 	//
 	(*this).laEmisora.emitirAnuncioIBeacon( (*this).beaconUUID, 
 											major,
@@ -187,21 +187,32 @@ public:
 											(*this).RSSI // rssi
 									);
 
-	Globales::elPuerto.escribir( "    anunciando " );
+	Globales::elPuerto.escribir( "    anunciando (ventana de " );
 	Globales::elPuerto.escribir( tiempoEspera );
-	Globales::elPuerto.escribir( " ms\n" );
+	Globales::elPuerto.escribir( " ms)\n" );
 
-	//
-	// 4. esperamos el tiempo que nos digan
-	//
-	esperar( tiempoEspera );
+	// 4. SIN delay(): el pararlo lo hace el loop() cuando pasa el intervalo.
+	//    Asi el micro no se bloquea y los anuncios salen con normalidad.
 
-	//
-	// 5. paramos anuncio
-	//
+  } // ()
+
+  // ............................................................
+  // Para el anuncio del beacon. La llama el loop() cuando ya ha pasado
+  // el intervalo de emision.
+  // ............................................................
+  // ............................................................
+  void pararAnuncio() {
 	(*this).laEmisora.detenerAnuncio();
-
 	Globales::elPuerto.escribir( "    anuncio parado\n" );
+  } // ()
+
+  // ............................................................
+  // Dice si la radio esta anunciando ahora mismo. Lo usa el loop() para
+  // saber si tiene que parar el beacon de la vuelta anterior.
+  // ............................................................
+  // ............................................................
+  bool hayAnuncioEnCurso() {
+	return (*this).laEmisora.estaAnunciando();
   } // ()
 
 }; // class

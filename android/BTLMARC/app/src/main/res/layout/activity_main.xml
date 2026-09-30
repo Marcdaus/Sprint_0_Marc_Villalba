@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout unico de MainActivity: los tres bloques unidos
+     (1) escaner BLE de prueba, (2) servicio del PROMPT 2, (3) prueba REST -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- ============ ESTADO ============ -->
+        <TextView
+            android:id="@+id/textoEstadoPermisos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="8dp"
+            android:text="Permisos: comprobando..." />
+
+        <!-- ============ 1) SERVICIO (PROMPT 2) ============ -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="8dp"
+            android:text="1) Servicio de beacons" />
+
+        <Button
+            android:id="@+id/botonArrancarServicio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="botonArrancarServicioPulsado"
+            android:text="Arrancar servicio" />
+
+        <Button
+            android:id="@+id/botonDetenerServicio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="botonDetenerServicioPulsado"
+            android:text="Detener servicio" />
+
+        <!-- Hook de pantalla del PROMPT 2. Lo rellena el servicio; el PROMPT 8 lo maquetara -->
+        <TextView
+            android:id="@+id/textoUltimaTrama"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="4dp"
+            android:text="Ultima trama: (todavia nada)" />
+
+        <!-- ============ 2) ESCANER BLE DE PRUEBA ============ -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="16dp"
+            android:text="2) Escaner BLE de prueba" />
+
+        <Button
+            android:id="@+id/botonBuscarDispositivosBTLE"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="botonBuscarDispositivosBTLEPulsado"
+            android:text="Buscar dispositivos BTLE" />
+
+        <Button
+            android:id="@+id/botonDetenerBusquedaDispositivosBTLE"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="botonDetenerBusquedaDispositivosBTLEPulsado"
+            android:text="Detener busqueda BTLE" />
+
+        <Button
+            android:id="@+id/botonBuscarNuestroDispositivoBTLE"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="botonBuscarNuestroDispositivoBTLEPulsado"
+            android:text="Buscar nuestro dispositivo BTLE" />
+
+        <!-- ============ 3) PRUEBA REST ============ -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="16dp"
+            android:text="3) Prueba del servidor REST" />
+
+        <Button
+            android:id="@+id/botonProbarRest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="botonProbarRestPulsado"
+            android:text="Probar REST (GET)" />
+
+        <TextView
+            android:id="@+id/textoRespuestaRest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="4dp"
+            android:text="Respuesta REST: (todavia nada)" />
+
+    </LinearLayout>
+</ScrollView>

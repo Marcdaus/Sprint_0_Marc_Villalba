@@ -72,9 +72,25 @@ public:
 	
   // .........................................................
   // .........................................................
+  // Enciende la radio y deja el nombre y el txPower configurados UNA SOLA VEZ.
+  //
+  // OJO (esto era un bug): antes, setName() y ScanResponse.addName() estaban en
+  // emitirAnuncioIBeacon(), o sea, en CADA beacon. ScanResponse es un pool de
+  // datos con memoria limitada y hay que vaciarlo con clearData() antes de
+  // volver a llenarlo. Como no se vaciaba, cada emisson gastaba un poco de ese
+  // pool: a los pocos beacon se agotaba, Advertising.start() dejava de arrancar
+  // y la placa se quedaba en silencio. Ahora se hace aqui, una unica vez.
+  // .........................................................
+  // .........................................................
   void encenderEmisora() {
-	// Serial.println ( "Bluefruit.begin() " );
-	 Bluefruit.begin(); 
+	 Bluefruit.begin();
+
+	 // esto va una sola vez: son ajustes del GAP, no del anuncio
+	 Bluefruit.setTxPower( (*this).txPower );
+	 Bluefruit.setName( (*this).nombreEmisora );
+
+	 Bluefruit.ScanResponse.clearData();
+	 Bluefruit.ScanResponse.addName(); // para que envie el nombre de emisora
 
 	 // por si acaso:
 	 (*this).detenerAnuncio();
@@ -111,27 +127,29 @@ public:
   } // ()
 
   // .........................................................
+  // Emite el iBeacon y lo deja anunciando.
+  // NO vuelve a tocar el nombre: eso lo hace encenderEmisora(), una sola vez
+  // (ver el aviso de arriba sobre la fuga de memoria del pool de ScanResponse).
+  // Devuelve true si el anuncio ha arrancado de verdad, para poder avisar.
   // .........................................................
-  void emitirAnuncioIBeacon( uint8_t * beaconUUID, int16_t major, int16_t minor, uint8_t rssi ) {
+  // .........................................................
+  bool emitirAnuncioIBeacon( uint8_t * beaconUUID, int16_t major, int16_t minor, uint8_t rssi ) {
 
 	//
 	//
 	//
 	(*this).detenerAnuncio();
-	
+
 	//
-	// creo el beacon 
+	// creo el beacon
 	//
 	BLEBeacon elBeacon( beaconUUID, major, minor, rssi );
 	elBeacon.setManufacturer( (*this).fabricanteID );
 
 	//
-	// parece que esto debe ponerse todo aquí
+	// limpio el pool de datos del anuncio antes de meter los nuevos
 	//
-
-	Bluefruit.setTxPower( (*this).txPower );
-	Bluefruit.setName( (*this).nombreEmisora );
-	Bluefruit.ScanResponse.addName(); // para que envíe el nombre de emisora (?!)
+	Bluefruit.Advertising.clearData();
 
 	//
 	// pongo el beacon
@@ -139,16 +157,38 @@ public:
 	Bluefruit.Advertising.setBeacon( elBeacon );
 
 	//
-	// ? qué valorers poner aquí
+	// ?
 	//
-	Bluefruit.Advertising.restartOnDisconnect(true); // no hace falta, pero lo pongo
-	Bluefruit.Advertising.setInterval(100, 100);    // in unit of 0.625 ms
+	Bluefruit.Advertising.restartOnDisconnect(true);
+
+	// intervalo entre anuncios, en unidades de 0,625 ms.
+	//
+	// OJO, esto es importante. El beacon tiene que verse una vez por segundo, pero
+	// NO hay que poner el intervalo del hardware a 1000 ms. Motivo: el micro esta
+	// ocupado (el "publicarValor()" tiene un esperar()/delay()), y la radio del
+	// nRF52 anuncia desde el propio hardware, pero si el intervalo coincide con el
+	// final de la ventana, el unico evento de anuncio cae justo en el momento en que
+	// el programa para el anuncio y se pierde. Con la ventana a 1 s y announces cada
+	// 100 unidades (100 * 0,625 = 62,5 ms) hay unos 16 anuncios por segundo dentro de
+	// la ventana: aunque el micro este bloqueado, alguno sale. Es lo que hacen los
+	// emisores reales de beacons.
+	Bluefruit.Advertising.setInterval(100, 100);
 
 	//
 	// empieza el anuncio, 0 = tiempo indefinido (ya lo pararán)
 	//
-	Bluefruit.Advertising.start( 0 ); 
-	
+	// OJO: start() devuelve false si no ha podido arrancar (por ejemplo si se ha
+	// agotado alguna memoria). Antes se ignoraba ese valor y por eso no se veía
+	// ningún error cuando la placa se callaba.
+	//
+	bool r = Bluefruit.Advertising.start( 0 );
+
+	if ( ! r ) {
+		Globales::elPuerto.escribir( " ERROR: Advertising.start() ha fallado: no se anuncia\n" );
+	}
+
+	return r;
+
   } // ()
 
   // .........................................................

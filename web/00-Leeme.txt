@@ -1,0 +1,86 @@
+1. Hay que arrancar un servidor http+php con este directorio como base.
+Por ejemplo:
+
+	php -S localhost:8080 -t .
+
+2. En un navegador cargar:
+
+   http://localhost:8080/ux/Aplicacion.html
+
+
+3. ENDPOINTS REST (PROMPT 3)
+----------------------------
+La app Android manda las mediciones por POST a:
+
+	http://<IP-DE-ESTE-PC>:8080/rest/guardarMedicion.php
+
+y las lee por GET de:
+
+	http://<IP-DE-ESTE-PC>:8080/rest/recuperarMedicion.php
+
+La IP se cambia en la app, en AnalizadorBeacons.java (IP_SERVIDOR).
+Este fichero tiene que estar accesible desde el movil: si el movil no
+llega, casi siempre es que el servidor de PHP solo esta escuchando en
+localhost. Se arranca escuchando en la IP de la red con:
+
+	php -S 0.0.0.0:8080 -t .
+
+Ademas, el firewall de Windows tiene que dejar pasar el puerto 8080.
+
+4. PRUEBAS (PROMPT 3)
+--------------------
+Las pruebas NO se ejecutan solas. El que las corre es el propietario.
+
+Las pruebas de los endpoints (peticiones de verdad por http) necesitan el
+servidor en marcha. En una consola, desde la raiz de este esqueleto:
+
+	php -S localhost:8080 -t .
+
+En otra consola, desde la carpeta pruebas/:
+
+	cd pruebas
+	php testEndpointsRest.php
+
+Tiene que decir "0 fallos". El codigo de salida es 0 si todo pasa y 1 si
+hay algun fallo.
+
+	OJO: pruebas/testAuxiliaresRest.php NO FUNCIONA, no lo ejecutes.
+	Las pruebas de los auxiliares quedan SIN CUBRIR por ahora, asi que lo
+	que se prueba de verdad es lo que ve el cliente (codigo HTTP y JSON
+	de la respuesta), que es lo que importa.
+	El fallo es este: para usar parsearJSON() y extraerFiltros() el
+	fichero tiene que incluir (require) los endpoints de rest/, pero al
+	incluirlos tambien se ejecuta su codigo, que comprueba el metodo HTTP.
+	En consola no hay metodo HTTP, asi que guardarMedicion.php responde un
+	405 y llama a exit(), que corta el script de pruebas al instante:
+	solo imprime {"error":"Metodo no permitido"} y no llega a hacer ninguna
+	prueba. El exit() no se puede tapar con output buffering.
+	Para arreglarlo habria que meter una guardia en los endpoints del tipo
+	if (realpath($_SERVER['SCRIPT_FILENAME']) === __FILE__) alrededor del
+	bloque que atiende la peticion, para que solo se ejecute cuando al
+	endpoint lo pide el navegador y no otro script. De momento se ha
+	decidido no tocar los endpoints por eso.
+
+testEndpointsRest.php necesita la extension "curl" de PHP. Si al
+ejecutarlo dice que no existe la funcion curl_init(), hay que activarla
+en php.ini, quitando el ; (punto y coma) de delante de la linea:
+
+	extension=curl
+
+Comprobar la sintaxis de un solo fichero:
+
+	php -l rest\guardarMedicion.php
+	php -l rest\recuperarMedicion.php
+
+5. STUB DE LA LOGICA DE NEGOCIO
+-------------------------------
+Ahora mismo logica/ todavia NO tiene guardarMedicion() ni
+recuperarMedicion(): eso es del PROMPT 4. Para que los endpoints se puedan
+probar ya, cargan pruebas/stubLogicaDeNegocio.php, que es un sustituto
+que no guarda ni consulta nada de verdad.
+
+En cuanto el PROMPT 4 ponga la logica de verdad en logica/, los endpoints
+la cargaran solos (estan preparados para eso) y el stub dejara de usarse:
+habra que BORRAR pruebas/stubLogicaDeNegocio.php, y reescribir
+pruebas/testEndpointsRest.php, porque el stub devuelve datos fijos y la
+logica de verdad validara el beacon y el minor.

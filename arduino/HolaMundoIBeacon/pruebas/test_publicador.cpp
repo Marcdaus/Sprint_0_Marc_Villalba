@@ -8,7 +8,7 @@
 // llamadas, y comprueban:
 //
 //   1. La aritmetica del "major"  ->  calcularMajor( DATOS, contador )
-//   2. La secuencia de publicarValor()  ->  emitir -> esperar -> detener
+//   2. La secuencia de publicarValor()  ->  solo emitir (el delay() se elimino)
 //   3. El valor viaja en el "minor" y es el de VALOR_MINOR (leido del .ino)
 //   4. El "loop()" ya no llama a emitirAnuncioIBeaconLibre ni al anuncio
 //      de prueba del esqueleto                        (esta en test_sketch.cpp)
@@ -78,10 +78,13 @@ public:
 
   void detenerAnuncio() {
     g_eventos.push_back( "detener" );
+    anunciando = false;
   } // ()
 
+  // Estado real: si no, la prueba de hayAnuncioEnCurso() no diria nada.
+  // Antes devolvia false siempre, ypublisharValor() ya no lleva delay().
   bool estaAnunciando() {
-    return false;
+    return anunciando;
   } // ()
 
   void emitirAnuncioIBeacon( uint8_t * beaconUUID, int16_t major,
@@ -90,7 +93,11 @@ public:
     g_ultimoMinor = minor;
     g_ultimoMajor = major;
     g_ultimoUuid.assign( (const char *) beaconUUID, 16 );
+    anunciando = true;
   } // ()
+
+private:
+  bool anunciando = false;
 
 }; // class
 
@@ -212,7 +219,12 @@ static void pruebaSecuenciaYMinor() {
   comprobar( VALOR_MINOR != -999999,
              "el .ino declara VALOR_MINOR en VARIABLES MODIFICABLES" );
 
-  // --- secuencia: emitir -> esperar -> detener, en ese orden ---
+  // --- secuencia: publicarValor() solo emite; parar es cosa del loop() ---
+  //
+  // OJO: antes publicarValor() hacia "emitir -> esperar(1000) -> detener". Ese
+  // delay() tumbaba el micro durante toda la ventana de anuncio y la placa se
+  // quedaba sin anunciar. Ahora publicarValor() solo arranca el anuncio y vuelve,
+  // y el loop() es quien lo para en la vuelta siguiente.
   g_eventos.clear();
   g_ultimoMinor = 0;
 
@@ -222,14 +234,26 @@ static void pruebaSecuenciaYMinor() {
 
   std::vector<std::string> esperado;
   esperado.push_back( "emitir" );
-  esperado.push_back( "esperar" );
-  esperado.push_back( "detener" );
 
   comprobar( g_eventos == esperado,
-             "llama a emitirAnuncioIBeacon, esperar y detenerAnuncio, en ese orden" );
+             "publicarValor() solo emite y NO espera ni detiene (el delay() se elimino)" );
 
-  comprobar( g_ultimaEspera == 1000,
-             "espera el tiempoEspera recibido (1000 ms)" );
+  // --- el loop() es quien para el anuncio, y no antes de tiempo ---
+  comprobar( elPublicador.hayAnuncioEnCurso(),
+             "tras publicarValor() hay un anuncio en curso" );
+
+  g_eventos.clear();
+
+  elPublicador.pararAnuncio();
+
+  std::vector<std::string> esperadoParar;
+  esperadoParar.push_back( "detener" );
+
+  comprobar( g_eventos == esperadoParar,
+             "pararAnuncio() es lo que detiene el anuncio" );
+
+  comprobar( ! elPublicador.hayAnuncioEnCurso(),
+             "tras pararAnuncio() ya no hay anuncio en curso" );
 
   // --- aviso por el puerto serie: uno por cada beacon emitido ---
   comprobar( ! Globales::g_mensajes.empty(),
@@ -302,8 +326,10 @@ int main() {
 //        [2] Secuencia de publicarValor() con emisora FALSA
 //          OK    se encuentra el sketch ../HolaMundoIBeacon.ino
 //          OK    el .ino declara VALOR_MINOR en VARIABLES MODIFICABLES
-//          OK    llama a emitirAnuncioIBeacon, esperar y detenerAnuncio, en ese orden
-//          OK    espera el tiempoEspera recibido (1000 ms)
+//          OK    publicarValor() solo emite y NO espera ni detiene (el delay() se elimino)
+//          OK    tras publicarValor() hay un anuncio en curso
+//          OK    pararAnuncio() es lo que detiene el anuncio
+//          OK    tras pararAnuncio() ya no hay anuncio en curso
 //          OK    avisa por el puerto serie cada vez que emite un beacon
 //          OK    el major es (14 << 8) | contador
 //
@@ -313,7 +339,7 @@ int main() {
 //          OK    el uuid anunciado es EPSG-GTI-MARC-3A
 //
 //        -----------------------------------------------------
-//         12 pruebas, 0 fallos
+//         14 pruebas, 0 fallos
 //        -----------------------------------------------------
 //
 //    El codigo de salida es 0 si todo pasa y 1 si hay algun fallo.

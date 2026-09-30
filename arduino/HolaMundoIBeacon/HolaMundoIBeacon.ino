@@ -37,10 +37,14 @@
 // Valor del proyecto que viaja en el "minor" del iBeacon.
 // Cambiar aqui para la demo: no esta clavado en el codigo.
 int VALOR_MINOR = 1234;
-// Tiempo que cada beacon se mantiene anunciando (milisegundos).
-int TIEMPO_EMISION = 1000;
-// Tiempo de reposo entre publicaciones del "loop()" (milisegundos).
-int TIEMPO_ESPERA = 2000;
+// Cada cuanto se emite un beacon (milisegundos). 1000 = uno cada segundo.
+// Este numero es la VENTANA de anuncio: durante 1 s se anuncia, y luego el
+// loop() para y arranca el siguiente.
+// El ritmo de verdad lo pone la radio con setInterval(100, 100) = 62,5 ms entre
+// anuncios, para que dentro de esa ventana haya varios y no se pierda ninguno
+// aunque el micro este ocupado. Antes el loop() llevaba un delay() de 1 s que
+// tumbaba el micro durante toda la ventana: la placa se quedaba callada.
+long INTERVALO_EMISION = 1000;
 // =====================================
 // --------------------------------------------------------------
 // --------------------------------------------------------------
@@ -119,68 +123,90 @@ void setup() {
 
 // --------------------------------------------------------------
 // --------------------------------------------------------------
-inline void lucecitas() {
-  using namespace Globales;
-
-  elLED.brillar( 100 ); // 100 encendido
-  esperar ( 400 ); //  100 apagado
-  elLED.brillar( 100 ); // 100 encendido
-  esperar ( 400 ); //  100 apagado
-  Globales::elLED.brillar( 100 ); // 100 encendido
-  esperar ( 400 ); //  100 apagado
-  Globales::elLED.brillar( 1000 ); // 1000 encendido
-  esperar ( 1000 ); //  100 apagado
-} // ()
-
+// Las lucecitas, pero SIN delay(): antes brillar() llamaba a esperar(), que es
+// delay(), y la secuencia entera tumbaba el loop 3,5 s. Ahora el loop va mirando
+// la hora con millis() y va cambiando de fase cuando toca, asi que el beacon
+// sale puntual.
 // --------------------------------------------------------------
-// loop ()
+// --> avanzarLuces() -->
 // --------------------------------------------------------------
 namespace Loop {
   uint8_t cont = 0;
+  unsigned long instanteEmision = 0;
+  unsigned long instanteFaseLuz = 0;
+  uint8_t faseLuz = 0;
 };
 
-// ..............................................................
-// ..............................................................
-// Emite el valor del proyecto como un iBeacon y para el anuncio.
+// Cada fase: quantos milisegundos dura, y si el LED queda encendido.
+// Mismo ritmo que la lucescitas() del esqueleto.
+const long DURACION_FASES[] = {  100, 400, 100, 400, 100, 400, 1000, 1000 };
+const bool LUZ_ENCENDIDA[]  = { true, false, true, false, true, false, true, false };
+const int NUM_FASES_LUZ = 8;
+
+void avanzarLuces() {
+
+  using namespace Loop;
+  using namespace Globales;
+
+  unsigned long ahora = millis();
+
+  // aun no toca cambiar de fase
+  if ( ahora - instanteFaseLuz < DURACION_FASES[ faseLuz ] ) {
+    return;
+  }
+
+  instanteFaseLuz = ahora;
+  faseLuz = ( faseLuz + 1 ) % NUM_FASES_LUZ;
+
+  if ( LUZ_ENCENDIDA[ faseLuz ] ) {
+    elLED.encender();
+  } else {
+    elLED.apagar();
+  }
+
+} // ()
+
+// --------------------------------------------------------------
+// Emite el valor del proyecto como un iBeacon una vez por segundo.
+// El anuncio de la vuelta anterior se para aqui y se arranca el
+// siguiente: como el intervalo son 1000 ms, cada beacon dura 1 s.
+// No lleva delay(): el micro queda libre para que la radio anuncie.
 // No recibe nada y no devuelve nada.
-// ..............................................................
-// ..............................................................
+// --------------------------------------------------------------
 // --> loop() -->
-// ..............................................................
-// ..............................................................
+// --------------------------------------------------------------
+// --------------------------------------------------------------
 void loop () {
 
   using namespace Loop;
   using namespace Globales;
 
+  unsigned long ahora = millis();
+
+  // aun no toca emitir: aqui solo se mueven las luces
+  if ( ahora - instanteEmision < INTERVALO_EMISION ) {
+    avanzarLuces();
+    return;
+  }
+
+  instanteEmision = ahora;
+
   cont++;
 
-  elPuerto.escribir( "\n---- loop(): empieza " );
-  elPuerto.escribir( cont );
-  elPuerto.escribir( "\n" );
+  // 1. si habia un anuncio de la vuelta anterior, se para ANTES de arrancar el
+  //    siguiente. Asi el anuncio dura lo que dura el intervalo (1 s) y hay una
+  //    pausa minima entre beacons, que es como se anuncia un iBeacon de verdad.
+  if ( elPublicador.hayAnuncioEnCurso() ) {
+    elPublicador.pararAnuncio();
+  }
 
+  // 2. publico el VALOR DEL PROYECTO:
+  //    el valor (VALOR_MINOR) viaja en el campo "minor" del iBeacon.
+  //    publicarValor() solo arranca el anuncio y vuelve enseguida (sin delay()),
+  //    para que el micro quede libre y la radio pueda ir anunciando.
+  elPublicador.publicarValor( VALOR_MINOR, cont, INTERVALO_EMISION );
 
-  lucecitas();
+  avanzarLuces();
 
-  // 
-  // publico el VALOR DEL PROYECTO:
-  // el valor (VALOR_MINOR) viaja en el campo "minor" del iBeacon
-  // 
-  elPublicador.publicarValor( VALOR_MINOR,
-                              cont,
-                              TIEMPO_EMISION // intervalo de emisión
-                              );
-
-  esperar( TIEMPO_ESPERA );
-
-  elPublicador.laEmisora.detenerAnuncio();
-  
-  // 
-  // 
-  // 
-  elPuerto.escribir( "---- loop(): acaba **** " );
-  elPuerto.escribir( cont );
-  elPuerto.escribir( "\n" );
-  
 } // loop ()
 // --------------------------------------------------------------
