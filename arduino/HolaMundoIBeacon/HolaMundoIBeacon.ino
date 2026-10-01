@@ -37,14 +37,16 @@
 // Valor del proyecto que viaja en el "minor" del iBeacon.
 // Cambiar aqui para la demo: no esta clavado en el codigo.
 int VALOR_MINOR = 1234;
-// Cada cuanto se emite un beacon (milisegundos). 1000 = uno cada segundo.
-// Este numero es la VENTANA de anuncio: durante 1 s se anuncia, y luego el
-// loop() para y arranca el siguiente.
-// El ritmo de verdad lo pone la radio con setInterval(100, 100) = 62,5 ms entre
-// anuncios, para que dentro de esa ventana haya varios y no se pierda ninguno
-// aunque el micro este ocupado. Antes el loop() llevaba un delay() de 1 s que
-// tumbaba el micro durante toda la ventana: la placa se quedaba callada.
-long INTERVALO_EMISION = 4000;
+// Cada cuanto empieza un beacon (milisegundos). 5000 = uno cada 5 segundos.
+// OJO: esto es CUANDO empieza, no cuanto dura. El beacon anuncia durante
+// DURACION_ANUNCIO y luego se calla; vuelve a sonar cuando se cumple este
+// intervalo. Mientras anuncia, la radio repite el MISMO paquete cada 62,5 ms
+// (setInterval(100, 100)) para que no se pierda ninguno aunque el micro este
+// ocupado; eso NO son varios beacons, es el mismo repetido.
+long INTERVALO_EMISION = 5000;
+// Cuanto dura el anuncio antes de callarse (milisegundos). 1000 = anuncia 1 s
+// y se queda callado el resto del intervalo. Ponlo menor que INTERVALO_EMISION.
+long DURACION_ANUNCIO = 1000;
 // =====================================
 // --------------------------------------------------------------
 // --------------------------------------------------------------
@@ -135,6 +137,7 @@ namespace Loop {
   unsigned long instanteEmision = 0;
   unsigned long instanteFaseLuz = 0;
   uint8_t faseLuz = 0;
+  bool anunciando = false;
 };
 
 // Cada fase: quantos milisegundos dura, y si el LED queda encendido.
@@ -167,9 +170,9 @@ void avanzarLuces() {
 } // ()
 
 // --------------------------------------------------------------
-// Emite el valor del proyecto como un iBeacon una vez por segundo.
-// El anuncio de la vuelta anterior se para aqui y se arranca el
-// siguiente: como el intervalo son 1000 ms, cada beacon dura 1 s.
+// Emite el valor del proyecto como un iBeacon y despues se calla.
+// Anuncia durante DURACION_ANUNCIO y espera el resto hasta que se
+// cumple INTERVALO_EMISION; entonces emite el siguiente.
 // No lleva delay(): el micro queda libre para que la radio anuncie.
 // No recibe nada y no devuelve nada.
 // --------------------------------------------------------------
@@ -183,28 +186,27 @@ void loop () {
 
   unsigned long ahora = millis();
 
-  // aun no toca emitir: aqui solo se mueven las luces
-  if ( ahora - instanteEmision < INTERVALO_EMISION ) {
-    avanzarLuces();
-    return;
+  if ( anunciando ) {
+
+    // 1. esta anunciando: cuando se cumple DURACION_ANUNCIO, se calla.
+    if ( ahora - instanteEmision >= DURACION_ANUNCIO ) {
+      elPublicador.pararAnuncio();
+      anunciando = false;
+    }
+
+  } else if ( ahora - instanteEmision >= INTERVALO_EMISION ) {
+
+    // 2. esta callado: cuando se cumple INTERVALO_EMISION, empieza otro beacon.
+    //    instanteEmision marca el arranque de ESTE beacon; de ahi se cuentan
+    //    tanto la duracion del anuncio como la espera hasta el siguiente.
+    instanteEmision = ahora;
+    cont++;
+
+    //    publicarValor() solo arranca el anuncio y vuelve enseguida (sin delay()),
+    //    para que el micro quede libre y la radio pueda ir anunciando.
+    elPublicador.publicarValor( VALOR_MINOR, cont, DURACION_ANUNCIO );
+    anunciando = true;
   }
-
-  instanteEmision = ahora;
-
-  cont++;
-
-  // 1. si habia un anuncio de la vuelta anterior, se para ANTES de arrancar el
-  //    siguiente. Asi el anuncio dura lo que dura el intervalo (1 s) y hay una
-  //    pausa minima entre beacons, que es como se anuncia un iBeacon de verdad.
-  if ( elPublicador.hayAnuncioEnCurso() ) {
-    elPublicador.pararAnuncio();
-  }
-
-  // 2. publico el VALOR DEL PROYECTO:
-  //    el valor (VALOR_MINOR) viaja en el campo "minor" del iBeacon.
-  //    publicarValor() solo arranca el anuncio y vuelve enseguida (sin delay()),
-  //    para que el micro quede libre y la radio pueda ir anunciando.
-  elPublicador.publicarValor( VALOR_MINOR, cont, INTERVALO_EMISION );
 
   avanzarLuces();
 

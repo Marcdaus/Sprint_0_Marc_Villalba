@@ -1,0 +1,10 @@
+/* ==========================================================
+   VARIABLES GLOBALES DE COLOR
+   Cambia un color aquí y se actualiza en toda la web.
+   ========================================================== */
+:root {
+  --color-fondo:       #E1E0DE; /* fondo de la página */
+  --color-titulo:      #000000; /* h1 / h2 */
+  --color-encabezado:  #5D5D5D; /* cabecera de las tablas (th) */
+  --color-contenido:   #999999; /* contenido de las tablas (td) */
+}

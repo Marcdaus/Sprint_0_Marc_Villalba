@@ -25,9 +25,11 @@
 <!-- pensar el desde cero. Lo unico que hay es un par de clases "utiles"   -->
 <!-- en el <body> ("pagina", "seccion", "tabla") por si las quieres usar.  -->
 <!-- ================================================================== -->
-<style>
-/* De momento vacio a proposito. */
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@700;800&display=swap">
+<link rel="stylesheet" href="variables.css">
+<link rel="stylesheet" href="estilos.css">
 
 <!-- ================================================================== -->
 <!-- LA LOGICA (PROMPT 6). No hay que tocar nada de aqui.                  -->
@@ -189,7 +191,7 @@ document.addEventListener( "DOMContentLoaded", iniciar );
 <section class="seccion">
 <h2>Última medida registrada</h2>
 
-<table class="tabla">
+<table class="tabla tabla--ultima">
   <thead>
     <tr>
       <th>id</th>
@@ -211,7 +213,7 @@ document.addEventListener( "DOMContentLoaded", iniciar );
 <section class="seccion">
 <h2>medidas anteriores</h2>
 
-<table class="tabla">
+<table class="tabla tabla--anteriores">
   <thead>
     <tr>
       <th>id</th>
