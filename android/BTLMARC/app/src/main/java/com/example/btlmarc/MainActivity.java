@@ -412,7 +412,7 @@ public class MainActivity extends AppCompatActivity {
         String url = AnalizadorBeacons.construirURL(
                 AnalizadorBeacons.IP_SERVIDOR,
                 AnalizadorBeacons.PUERTO_SERVIDOR,
-                "");
+                AnalizadorBeacons.RUTA_RECUPERAR);
 
         textoRespuestaRest.setText("Respuesta REST: esperando a " + url + " ...");
 

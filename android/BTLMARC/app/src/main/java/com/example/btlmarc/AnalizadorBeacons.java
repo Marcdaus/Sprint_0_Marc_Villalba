@@ -17,12 +17,16 @@ public class AnalizadorBeacons {
     // (public: el servicio vive en otro paquete y las tiene que poder leer)
     public static final String UUID_BEACON     = "EPSG-GTI-MARC-3A";       // uuid de NUESTRO beacon (16 caracteres)
     public static final String NOMBRE_EMISORA  = "GTI-3A";                // nombre_emisora que va en el JSON
-    public static final String IP_SERVIDOR     = "192.168.1.5";           // IP del PC con el servidor REST
+    // OJO: esta IP es la del PC en la red de casa, y el router la puede
+    // cambiar (cada vez que se reinicia, por ejemplo). Hay que mirarla en el
+    // PC antes de la demo. En Windows: "ipconfig" y buscar IPv4.
+    public static final String IP_SERVIDOR     = "192.168.18.14";         // IP del PC con el servidor REST
     public static final int    PUERTO_SERVIDOR = 8080;                    // puerto del servidor REST
     // La ruta lleva "servidor/" delante porque el servidor PHP se arranca con
     // raiz en la carpeta Sprint_0_Marc_Villalba, y ahi la API cuelga de
     // servidor/rest/. Si cambias donde se arranca el servidor, cambialo aqui.
     public static final String RUTA_GUARDAR    = "servidor/rest/guardarMedicion.php"; // ruta del PHP que guarda la medicion
+    public static final String RUTA_RECUPERAR  = "servidor/rest/recuperarMedicion.php"; // ruta del PHP que devuelve las mediciones
     public static final int    RSSI_MINIMO     = -127;                    // RSSI mas bajo que se acepta (dBm)
     // ======================================
 

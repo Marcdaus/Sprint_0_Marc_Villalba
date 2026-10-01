@@ -44,7 +44,7 @@ int VALOR_MINOR = 1234;
 // anuncios, para que dentro de esa ventana haya varios y no se pierda ninguno
 // aunque el micro este ocupado. Antes el loop() llevaba un delay() de 1 s que
 // tumbaba el micro durante toda la ventana: la placa se quedaba callada.
-long INTERVALO_EMISION = 1000;
+long INTERVALO_EMISION = 4000;
 // =====================================
 // --------------------------------------------------------------
 // --------------------------------------------------------------
