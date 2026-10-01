@@ -19,7 +19,10 @@ public class AnalizadorBeacons {
     public static final String NOMBRE_EMISORA  = "GTI-3A";                // nombre_emisora que va en el JSON
     public static final String IP_SERVIDOR     = "192.168.1.5";           // IP del PC con el servidor REST
     public static final int    PUERTO_SERVIDOR = 8080;                    // puerto del servidor REST
-    public static final String RUTA_GUARDAR    = "rest/guardarMedicion.php"; // ruta del PHP que guarda la medicion
+    // La ruta lleva "servidor/" delante porque el servidor PHP se arranca con
+    // raiz en la carpeta Sprint_0_Marc_Villalba, y ahi la API cuelga de
+    // servidor/rest/. Si cambias donde se arranca el servidor, cambialo aqui.
+    public static final String RUTA_GUARDAR    = "servidor/rest/guardarMedicion.php"; // ruta del PHP que guarda la medicion
     public static final int    RSSI_MINIMO     = -127;                    // RSSI mas bajo que se acepta (dBm)
     // ======================================
 

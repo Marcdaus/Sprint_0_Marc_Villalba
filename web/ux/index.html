@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<!-- ====================================================================== -->
+<!-- PAGINA PRINCIPAL DE LA WEB  (PROMPT 7, parte de estructura)           -->
+<!--                                                                          -->
+<!-- Aqui esta el DISEÑO, pero SOLO en HTML: la estructura y los datos.       -->
+<!-- NO hay CSS a proposito.                                                -->
+<!--                                                                          -->
+<!-- Cuando la maquina este lista, el estilo se pone en el <head>, en el   -->
+<!-- <style> que esta marcado como "AQUI VA EL CSS".                        -->
+<!--                                                                          -->
+<!-- Los datos NO salen de aqui: los pide logicaFake/consultarMediciones.js  -->
+<!-- al servidor y llegan ya adaptados (id, nombre, minor, fecha...).         -->
+<!-- Si la lista de mediciones esta vacia, sale un texto en vez de tablas.  -->
+<!-- ====================================================================== -->
+<html lang="es">
+
+<head>
+<meta charset="utf-8"/>
+<title>Medidas del beacon</title>
+
+<!-- ================================================================== -->
+<!-- AQUI VA EL CSS                                                      -->
+<!--                                                                      -->
+<!-- De momento no hay nada de estilo a proposito, para que se pueda      -->
+<!-- pensar el desde cero. Lo unico que hay es un par de clases "utiles"   -->
+<!-- en el <body> ("pagina", "seccion", "tabla") por si las quieres usar.  -->
+<!-- ================================================================== -->
+<style>
+/* De momento vacio a proposito. */
+</style>
+
+<!-- ================================================================== -->
+<!-- LA LOGICA (PROMPT 6). No hay que tocar nada de aqui.                  -->
+<!-- ================================================================== -->
+<script src="logicaFake/configuracion.js"></script>
+<script src="logicaFake/construirURL.js"></script>
+<script src="logicaFake/adaptarMediciones.js"></script>
+<script src="logicaFake/formatearFecha.js"></script>
+<script src="logicaFake/consultarMediciones.js"></script>
+
+<!-- ================================================================== -->
+<!-- LA PINTURA. Esto si es de esta pagina y se puede tocar sin miedo.     -->
+<!-- ================================================================== -->
+<script>
+// ----------------------------------------------------------------------
+// Escribe en el <p id="estado">.
+//
+// OJO: no se guarda en una constante, porque este <script> esta en el
+// <head> y ahi todavia no existe el <p> (el navegador va leyendo la
+// pagina de arriba abajo). Si se guardara al arrancar, valdria null y
+// reventaria. Buscando el elemento en el momento de usarlo no hay
+// problema.
+// ----------------------------------------------------------------------
+function aviso( texto ) {
+  document.getElementById( "estado" ).textContent = texto;
+}
+
+// ----------------------------------------------------------------------
+// Crea una celda con un dato.
+//
+// Se usa textContent y no innerHTML a proposito: el nombre de la
+// emisora viene de un movil, y con innerHTML un nombre con etiquetas
+// dentro se ejecutaria como codigo. Con textContent se escribe tal cual.
+// ----------------------------------------------------------------------
+function celda( valor ) {
+
+  const td = document.createElement( "td" );
+
+  // si el dato no existe, se deja la celda vacia en vez de poner "null"
+  if ( valor === null || valor === undefined ) {
+    valor = "";
+  }
+
+  td.textContent = valor;
+  return td;
+
+}
+
+// ----------------------------------------------------------------------
+// La columna "Medicion" es el minor del beacon, y SIEMPRE con "ppm"
+// detras. Da igual el valor que tenga: 1234 ppm, 0 ppm, -5 ppm...
+//
+// Si el minor no viene, se deja la celda vacia (no tiene sentido
+// escribir "null ppm").
+// ----------------------------------------------------------------------
+function textoMedicion( minor ) {
+
+  if ( minor === null || minor === undefined ) {
+    return "";
+  }
+
+  return minor + " ppm";
+
+}
+
+// ----------------------------------------------------------------------
+// Crea una fila con los cuatro datos del diseño y la mete en la tabla.
+// El orden de las celdas es el orden de las columnas del <thead>.
+// ----------------------------------------------------------------------
+function pintarFila( cuerpo, medicion ) {
+
+  const fila = document.createElement( "tr" );
+
+  fila.appendChild( celda( medicion.id ) );
+  fila.appendChild( celda( textoMedicion( medicion.minor ) ) );
+  fila.appendChild( celda( medicion.nombre ) );
+  fila.appendChild( celda( medicion.fecha ) );
+
+  cuerpo.appendChild( fila );
+
+}
+
+// ----------------------------------------------------------------------
+// Reparte la lista entre las dos tablas.
+//
+// El servidor ya la manda de la mas nueva a la mas antigua, asi que:
+//   - la primera es "la ultima medida registrada";
+//   - todas las demas son "medidas anteriores".
+// ----------------------------------------------------------------------
+function pintarMediciones( lista ) {
+
+  const cuerpoUltima    = document.getElementById( "ultimaMedicion" );
+  const cuerpoAnteriores = document.getElementById( "medidasAnteriores" );
+
+  // los datos ya han llegado: se quita el "Cargando..." y cualquier
+  // mensaje de error que hubiera quedado de antes
+  aviso( "" );
+
+  // se vacian las dos tablas por si se vuelve a pedir la lista
+  cuerpoUltima.innerHTML = "";
+  cuerpoAnteriores.innerHTML = "";
+
+  // si no hay nada guardado, no se enseñan las tablas
+  if ( lista.length === 0 ) {
+    aviso( "Todavia no hay ninguna medicion guardada." );
+    return;
+  }
+
+  // la mas reciente va sola en su tabla
+  pintarFila( cuerpoUltima, lista[0] );
+
+  // el resto van a la tabla de abajo
+  for ( let i = 1; i < lista.length; i++ ) {
+    pintarFila( cuerpoAnteriores, lista[i] );
+  }
+
+}
+
+// ----------------------------------------------------------------------
+// Si el servidor falla, se enseña el motivo que ha dado.
+// ----------------------------------------------------------------------
+function pintarError( mensaje ) {
+  aviso( "ERROR: " + mensaje );
+}
+
+// ----------------------------------------------------------------------
+// Al cargar la pagina: se avisa de que se esta esperando y se pide la
+// lista. De aqui no se sabe nada de XHR, solo se llama a la funcion.
+//
+// Esto espera a que el navegador haya leido todo el HTML. Si se hiciera
+// aqui mismo, el <p> y las tablas todavia no existirian y no se veria
+// nada. Por eso esta funcion solo se llama al final.
+// ----------------------------------------------------------------------
+function iniciar() {
+
+  aviso( "Cargando mediciones..." );
+  consultarMediciones( pintarMediciones, pintarError );
+
+}
+
+// se espera a que la pagina entera este leida antes de pedir los datos
+document.addEventListener( "DOMContentLoaded", iniciar );
+</script>
+
+</head>
+
+<body class="pagina">
+
+<!-- ================================================================== -->
+<!-- Aviso de carga o de error. Cuando va bien, queda vacio.            -->
+<!-- ================================================================== -->
+<p id="estado"></p>
+
+
+<!-- ================================================================== -->
+<!-- ULTIMA MEDIDA REGISTRADA                                            -->
+<!-- La mas reciente, que es la primera de la lista.                     -->
+<!-- ================================================================== -->
+<section class="seccion">
+<h2>Última medida registrada</h2>
+
+<table class="tabla">
+  <thead>
+    <tr>
+      <th>id</th>
+      <th>Medición</th>
+      <th>nombre_emisora</th>
+      <th>Fecha y Hora</th>
+    </tr>
+  </thead>
+  <!-- la fila la mete pintarMediciones() -->
+  <tbody id="ultimaMedicion"></tbody>
+</table>
+</section>
+
+
+<!-- ================================================================== -->
+<!-- MEDIDAS ANTERIORES                                                  -->
+<!-- Todas menos la ultima: de la segunda en adelante.                   -->
+<!-- ================================================================== -->
+<section class="seccion">
+<h2>medidas anteriores</h2>
+
+<table class="tabla">
+  <thead>
+    <tr>
+      <th>id</th>
+      <th>Medición</th>
+      <th>nombre_emisora</th>
+      <th>Fecha y Hora</th>
+    </tr>
+  </thead>
+  <!-- las filas las mete pintarMediciones() -->
+  <tbody id="medidasAnteriores"></tbody>
+</table>
+</section>
+
+</body>
+
+</html>

@@ -16,8 +16,8 @@
 //
 // COMO EJECUTARLAS:
 //
-//   1) Arrancar el servidor en una consola, desde la raiz del esqueleto
-//      (la carpeta EsqueletoWebAppEnPHPConSesion):
+//   1) Arrancar el servidor en una consola, desde Sprint_0_Marc_Villalba
+//      (la carpeta que contiene android/, arduino/, servidor/ y web/):
 //
 //          php -S localhost:8080 -t .
 //
@@ -66,8 +66,8 @@
 // =====================================
 
 const URL_SERVIDOR   = 'http://localhost:8080';
-const RUTA_GUARDAR   = '/rest/guardarMedicion.php';
-const RUTA_RECUPERAR = '/rest/recuperarMedicion.php';
+const RUTA_GUARDAR   = '/servidor/rest/guardarMedicion.php';
+const RUTA_RECUPERAR = '/servidor/rest/recuperarMedicion.php';
 
 // El JSON que manda la app Android de verdad (el del prompt).
 const JSON_MEDICION = '{"uuid_beacon":"EPSG-GTI-MARC-3A","nombre_emisora":"GTI-3A",'

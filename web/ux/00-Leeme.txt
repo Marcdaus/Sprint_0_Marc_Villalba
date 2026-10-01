@@ -1,0 +1,157 @@
+======================================================================
+ LA WEB   (PROMPTs 6 y 7)
+======================================================================
+
+Aquí vive lo que se ve en el navegador. La carpeta de este README es
+web/ux/, y dentro:
+
+    index.html              LA PAGINA PRINCIPAL. Muestra la ultima
+                            medida registrada y, debajo, las anteriores.
+                            Aqui es donde va el estilo (CSS).
+    Aplicacion.html         el esqueleto viejo del enunciado, con los
+                            botones de prueba de login. Se puede borrar
+                            cuando ya no haga falta.
+    logicaFake/             la lógica, separada de lo visual
+    00-Leeme.txt            este fichero
+
+PARA VER LA PAGINA:
+
+    cd "C:\Users\MarcV\Desktop\otra vez\Sprint_0_Marc_Villalba"
+    php -S localhost:8080 -t .
+    http://localhost:8080/web/ux/
+
+----------------------------------------------------------------------
+0. LO QUE HACE index.html
+----------------------------------------------------------------------
+Pide la lista con consultarMediciones() y la reparte en dos tablas:
+
+    - la PRIMERA medicion de la lista (que es la mas reciente, porque el
+      servidor las manda ordenadas) va sola, bajo el titulo
+      "Ultima medida registrada";
+    - todas las demas van debajo, bajo "medidas anteriores".
+
+Cada fila tiene las cuatro columnas del enunciado: id, Medicion,
+nombre_emisora y Fecha y Hora. En la columna "Medicion" se pinta el minor
+con " ppm" detras, siempre, sea cual sea el valor.
+
+OJO: la fecha se pinta TAL CUAL la manda el servidor, con los segundos
+(2026-09-30 19:10:47). Por eso aqui NO se usa formatearFecha(). Si algún
+dia se quiere 26/09/2026 12:34, es cambiar la celda de la fecha por
+formatearFecha( medicion.fecha ).
+
+Casos que ya estan mirados:
+
+    - si no hay ninguna medicion guardada, sale "Todavia no hay ninguna
+      medicion guardada." y las tablas se quedan vacias;
+    - si el servidor falla, sale "ERROR: ..." con el motivo que da.
+
+Sobre la seguridad: las celdas se rellenan con textContent y no con
+innerHTML. El nombre de la emisora viene de un movil, y con innerHTML un
+nombre con etiquetas dentro se ejecutaria como codigo. Con textContent se
+escribe tal cual.
+
+----------------------------------------------------------------------
+1. DÓNDE ESTÁ LA API (importante, se cambia mucho)
+----------------------------------------------------------------------
+El servidor PHP se arranca con la RAÍZ en la carpeta Sprint_0_Marc_Villalba,
+o sea, en la carpeta que contiene android/, arduino/, servidor/ y web/.
+
+    cd "C:\Users\MarcV\Desktop\otra vez\Sprint_0_Marc_Villalba"
+    php -S localhost:8080
+
+Por eso las direcciones llevan el "servidor/" delante:
+
+    la web ...........  http://localhost:8080/web/ux/Aplicacion.html
+    la API ...........  http://localhost:8080/servidor/rest/recuperarMedicion.php
+
+Si arrancas el servidor dentro de servidor/ en vez de en la raíz, la URL de
+la web sigue valiendo pero la ruta de RUTA_RECUPERAR (y la del móvil) hay
+que quitarles el "servidor/" de delante.
+
+----------------------------------------------------------------------
+2. LOS FICHEROS DE logicaFake/
+----------------------------------------------------------------------
+    configuracion.js      VARIABLES MODIFICABLES: host, puerto y ruta.
+                          Es el único sitio que hay que tocar para
+                          apuntar a otro servidor. El "minor" NO está
+                          aquí a propósito: se enseña tal cual llega.
+
+    construirURL.js       junta "http://" + host + ":" + puerto + "/" + ruta
+
+    adaptarMediciones.js  el servidor manda uuid_beacon, tx_power, rssi...
+                          y aquí pasan a llamarse uuid, txPower, rssi.
+                          La fecha se deja en texto, sin tocar.
+
+    formatearFecha.js     "2026-09-26 12:34:05"  ->  "26/09/2026 12:34"
+                          Si el formato no es ese, devuelve el texto tal
+                          cual, para que nunca se pinte "NaN".
+
+    consultarMediciones.js La que hace la petición. Es la única que sabe
+                          qué es un XHR. Llama a:
+                            callbackExito( listaDeMediciones )
+                            callbackError( textoParaEnseñar )
+                          Cada callback se llama UNA vez, aunque fallen
+                          las dos cosas a la vez.
+
+Así se llama, en una línea (esto lo hará el PROMPT 7):
+
+    consultarMediciones( pintarMediciones, pintarError );
+
+----------------------------------------------------------------------
+3. CUIDADO CON LAS PALABRAS DEL SERVIDOR
+----------------------------------------------------------------------
+El servidor manda nombres de tabla y la web usa otros. El mapa es:
+
+    servidor            web
+    ------------------  ----------------
+    id                  id
+    uuid_beacon         uuid
+    nombre_emisora      nombre
+    major               major
+    minor               minor
+    tx_power            txPower
+    rssi                rssi
+    fecha               fecha   (en texto, tal cual)
+
+Fíjate en que el "id" ahora también lo manda el servidor (se añadió en el
+PROMPT 6, antes no salía), porque la tabla lo enseña.
+
+----------------------------------------------------------------------
+4. LO QUE VIENE EN LA LISTA
+----------------------------------------------------------------------
+La lista llega ordenada de más nueva a más antigua: la primera es la última
+medida registrada y el resto son las anteriores. El servidor manda las
+últimas 50 como mucho.
+
+El diseño que se pidió es este:
+
+    Última medida registrada
+      id | Medición | nombre_emisora | Fecha y Hora
+       1 | 1234 ppm | GTI-3A         | 26/09/2026 12:34
+
+    medidas anteriores
+      id | Medición | nombre_emisora | Fecha y Hora
+       2 | 1234 ppm | GTI-3A         | 26/09/2026 12:34
+       ...
+
+O sea: la primera fila va aparte y las demás en otra tabla. Y en la columna
+"Medición" el valor del minor va SIEMPRE con "ppm" detrás, sea el que sea
+el valor. Eso lo pone el PROMPT 7 al pintar, no la lógica.
+
+----------------------------------------------------------------------
+5. LAS PRUEBAS
+----------------------------------------------------------------------
+    cd pruebas
+    node pruebasLogicaFake.js
+
+Son 20 pruebas. No necesitan el servidor, ni MySQL, ni navegador: el XHR
+está simulado dentro del propio fichero. Resultado esperado:
+
+    20 pruebas, 0 fallos. TODO CORRECTO.
+
+Ojo: npm NO hace falta, y no hay que instalar nada. Node ya está en el
+ordenador (v26).
+
+Si el día de mañana se instala algo con npm y salta el aviso de "no se
+puede cargar npm.ps1", es cosa de PowerShell, no del proyecto: se llama a
+npm.cmd en vez de a npm.

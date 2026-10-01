@@ -361,7 +361,7 @@ titulo( 'recuperarMedicion: sin filtros, se devuelven todas' );
 
 $falso = ponerPDOFalso();
 $falso->filas = [
-  [ 'uuid_beacon' => 'EPSG-GTI-MARC-3A', 'nombre_emisora' => 'GTI-3A',
+  [ 'id' => '1', 'uuid_beacon' => 'EPSG-GTI-MARC-3A', 'nombre_emisora' => 'GTI-3A',
     'major' => '3584', 'minor' => '1234', 'tx_power' => '4', 'rssi' => '-53',
     'fecha' => '2026-09-29 10:15:00' ]
 ];
@@ -404,6 +404,9 @@ comprobar( $medicion['fecha'] === '2026-09-29 10:15:00',
 comprobar( isset( $medicion['uuid_beacon'] ) && isset( $medicion['nombre_emisora'] )
            && isset( $medicion['tx_power'] ),
            'la medicion trae los seis campos de la medicion mas la fecha' );
+
+comprobar( $medicion['id'] === 1 && is_int( $medicion['id'] ),
+           'la medicion trae el id, que es lo que pinta la web en la primera columna' );
 
 
 titulo( 'recuperarMedicion: con un solo filtro, solo ese filtro' );
@@ -531,7 +534,7 @@ comprobar( $falso->ejecuciones === 0 && $GLOBALS['pdo'] === $falso,
 //
 // RESULTADO ESPERADO:
 //
-//      55 pruebas, 0 fallos
+//      56 pruebas, 0 fallos
 //
 // Y una linea mas al final con las pruebas que han pasado. Si sale
 // "1 fallos" o mas, el numero del fallo es el del principio de la seccion.

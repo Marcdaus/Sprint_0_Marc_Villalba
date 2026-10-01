@@ -308,7 +308,9 @@ function recuperarMedicion( $filtro ) {
     // ---------------------------------------------------------------
     // 1. SELECT base
     // ---------------------------------------------------------------
-    $columnas = 'uuid_beacon, nombre_emisora, major, minor, tx_power, rssi, fecha';
+    // El "id" tambien se trae: la web (PROMPTs 6 y 7) lo enseña en la
+    // primera columna de la tabla. Antes faltaba y no se podia pintar.
+    $columnas = 'id, uuid_beacon, nombre_emisora, major, minor, tx_power, rssi, fecha';
     $sql = 'SELECT ' . $columnas . ' FROM mediciones';
 
     $condiciones = [];
@@ -361,6 +363,12 @@ function recuperarMedicion( $filtro ) {
     foreach ( $filas as $fila ) {
 
       $medicion = new stdClass();
+
+      // el id va el primero: es la clave de la fila y la web (PROMPTs 6 y
+      // 7) lo enseña en la primera columna de la tabla. OJO: como aqui se
+      // copia campo a campo, anadir el id al SELECT no basta, tambien
+      // hay que copiarlo aqui o no llegaria al JSON
+      $medicion->id             = (int) $fila['id'];
       $medicion->uuid_beacon    = $fila['uuid_beacon'];
       $medicion->nombre_emisora = $fila['nombre_emisora'];
       $medicion->major          = (int) $fila['major'];

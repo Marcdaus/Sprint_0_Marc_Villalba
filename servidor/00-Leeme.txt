@@ -31,25 +31,32 @@ endpoints. XAMPP la trae activada de serie, asi que en principio no hay
 que tocar nada.
 
 
-1. Hay que arrancar un servidor http+php con este directorio como base.
-Por ejemplo:
+1. Hay que arrancar un servidor http+php. OJO: la raiz ya NO es esta
+carpeta (servidor/), sino la carpeta de arriba, Sprint_0_Marc_Villalba,
+porque ahi hay tanto la API (servidor/) como la web (web/). Desde
+Sprint_0_Marc_Villalba:
 
 	php -S localhost:8080 -t .
 
 2. En un navegador cargar:
 
-   http://localhost:8080/ux/Aplicacion.html
+   http://localhost:8080/web/ux/Aplicacion.html
 
 
 3. ENDPOINTS REST (PROMPT 3)
 ----------------------------
 La app Android manda las mediciones por POST a:
 
-	http://<IP-DE-ESTE-PC>:8080/rest/guardarMedicion.php
+	http://<IP-DE-ESTE-PC>:8080/servidor/rest/guardarMedicion.php
 
 y las lee por GET de:
 
-	http://<IP-DE-ESTE-PC>:8080/rest/recuperarMedicion.php
+	http://<IP-DE-ESTE-PC>:8080/servidor/rest/recuperarMedicion.php
+
+Ojo al "servidor/" de delante: va porque la raiz del servidor es
+Sprint_0_Marc_Villalba. La app tiene esa ruta en AnalizadorBeacons.java
+(RUTA_GUARDAR), y la web la tiene en web/ux/logicaFake/configuracion.js
+(RUTA_RECUPERAR).
 
 La IP se cambia en la app, en AnalizadorBeacons.java (IP_SERVIDOR).
 Este fichero tiene que estar accesible desde el movil: si el movil no
@@ -65,7 +72,7 @@ Ademas, el firewall de Windows tiene que dejar pasar el puerto 8080.
 Las pruebas NO se ejecutan solas. El que las corre es el propietario.
 
 Las pruebas de los endpoints (peticiones de verdad por http) necesitan el
-servidor en marcha. En una consola, desde la raiz de este esqueleto:
+servidor en marcha. En una consola, desde Sprint_0_Marc_Villalba:
 
 	php -S localhost:8080 -t .
 
