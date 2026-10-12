@@ -1,0 +1,36 @@
+========================================
+ COMANDOS DEL PROYECTO
+========================================
+
+ARRANCAR SERVIDOR (PHP)
+  cd "C:\Users\MarcV\Desktop\otra vez\Sprint_0_Marc_Villalba"
+  php -S 0.0.0.0:8080 -t .
+  Si "php" no se reconoce, usa la ruta completa:
+  C:\xampp\php\php.exe -S 0.0.0.0:8080 -t .
+
+PARAR SERVIDOR
+  Ctrl + C
+
+LIMPIAR BASE DE DATOS (borra todas las mediciones y reinicia el id)
+  C:\xampp\mysql\bin\mysql.exe -u root proyecto_beacon -e "TRUNCATE TABLE mediciones;"
+
+ARRANCAR PHPMYADMIN
+  En el panel de XAMPP pulsar Start en Apache.
+  (MySQL tambien tiene que estar en Start.)
+
+----------------------------------------
+
+IP DEL SERVIDOR EN ANDROID
+  IP_SERVIDOR (android) : BTLMARC\app\src\main\java\com\example\btlmarc\AnalizadorBeacons.java  ->  linea 30
+  Hay que poner la IP actual del PC y volver a compilar e instalar la app.
+
+VER LA IP ACTUAL DEL PC
+  Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } | Select-Object IPAddress,InterfaceAlias
+
+----------------------------------------
+
+DIRECCIONES
+  Web (mediciones)  : http://localhost:8080/web/ux/index.html
+  Web (login/app)   : http://localhost:8080/web/ux/Aplicacion.html
+  API REST          : http://localhost:8080/servidor/rest/recuperarMedicion.php
+  phpMyAdmin        : http://localhost/phpmyadmin

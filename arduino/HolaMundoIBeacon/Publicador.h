@@ -71,6 +71,7 @@ public:
   };
 
   // ............................................................
+  // --> Publicador()
   // ............................................................
   Publicador( ) {
 	// ATENCION: no hacerlo aquí. (*this).laEmisora.encenderEmisora();
@@ -78,12 +79,14 @@ public:
   } // ()
 
   // ............................................................
+  // --> encenderEmisora() -->
   // ............................................................
   void encenderEmisora() {
 	(*this).laEmisora.encenderEmisora();
   } // ()
 
   // ............................................................
+  // valorCO2: Z, contador: N, tiempoEspera: N --> publicarCO2() -->
   // ............................................................
   void publicarCO2( int16_t valorCO2, uint8_t contador,
 					long tiempoEspera ) {
@@ -120,6 +123,7 @@ public:
   } // ()
 
   // ............................................................
+  // valorTemperatura: Z, contador: N, tiempoEspera: N --> publicarTemperatura() -->
   // ............................................................
   void publicarTemperatura( int16_t valorTemperatura,
 							uint8_t contador, long tiempoEspera ) {
@@ -208,6 +212,7 @@ public:
   // Para el anuncio del beacon. La llama el loop() cuando ya ha pasado
   // el intervalo de emision.
   // ............................................................
+  // --> pararAnuncio() -->
   // ............................................................
   void pararAnuncio() {
 	(*this).laEmisora.detenerAnuncio();
@@ -218,6 +223,7 @@ public:
   // Dice si la radio esta anunciando ahora mismo. Lo usa el loop() para
   // saber si tiene que parar el beacon de la vuelta anterior.
   // ............................................................
+  // B <-- hayAnuncioEnCurso() <--
   // ............................................................
   bool hayAnuncioEnCurso() {
 	return (*this).laEmisora.estaAnunciando();

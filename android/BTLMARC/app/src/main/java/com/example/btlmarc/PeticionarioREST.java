@@ -25,6 +25,7 @@ public class PeticionarioREST extends AsyncTask<Void, Void, Boolean> {
     // --------------------------------------------------------------------
     // --------------------------------------------------------------------
     public interface RespuestaREST {
+        // codigo: Z, cuerpo: Text --> callback() -->
         void callback (int codigo, String cuerpo);
     }
 
@@ -40,6 +41,7 @@ public class PeticionarioREST extends AsyncTask<Void, Void, Boolean> {
 
     // --------------------------------------------------------------------
     // --------------------------------------------------------------------
+    // metodo: Text, url: Text, cuerpo: Text, respuesta: RespuestaREST --> hacerPeticionREST() -->
     public void hacerPeticionREST (String metodo, String urlDestino, String cuerpo, RespuestaREST  laRespuesta) {
         this.elMetodo = metodo;
         this.urlDestino = urlDestino;
@@ -51,6 +53,7 @@ public class PeticionarioREST extends AsyncTask<Void, Void, Boolean> {
 
     // --------------------------------------------------------------------
     // --------------------------------------------------------------------
+    // --> PeticionarioREST() -->
     public PeticionarioREST() {
         Log.d("clienterestandroid", "constructor()");
     }
@@ -58,6 +61,7 @@ public class PeticionarioREST extends AsyncTask<Void, Void, Boolean> {
     // --------------------------------------------------------------------
     // --------------------------------------------------------------------
     @Override
+    // --> doInBackground() -->
     protected Boolean doInBackground(Void... params) {
         Log.d("clienterestandroid", "doInBackground()");
 
@@ -132,6 +136,7 @@ public class PeticionarioREST extends AsyncTask<Void, Void, Boolean> {
 
     // --------------------------------------------------------------------
     // --------------------------------------------------------------------
+    // comoFue: B --> onPostExecute() -->
     protected void onPostExecute(Boolean comoFue) {
         // llamado tras doInBackground()
         Log.d("clienterestandroid", "onPostExecute() comoFue = " + comoFue);

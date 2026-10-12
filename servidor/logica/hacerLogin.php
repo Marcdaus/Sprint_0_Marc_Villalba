@@ -11,6 +11,7 @@
 //
 // nombre:Texto, password:Texto -> hacerLogin() -> VoF
 //
+// nombre: Text, password: Text --> hacerLogin() --x --> B
 // ---------------------------------------------------------------
 
 function hacerLogin( $nombre, $password ) {

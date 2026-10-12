@@ -59,6 +59,8 @@
 // pagina de arriba abajo). Si se guardara al arrancar, valdria null y
 // reventaria. Buscando el elemento en el momento de usarlo no hay
 // problema.
+//
+// texto: Text --> aviso() -->
 // ----------------------------------------------------------------------
 function aviso( texto ) {
   document.getElementById( "estado" ).textContent = texto;
@@ -70,6 +72,8 @@ function aviso( texto ) {
 // Se usa textContent y no innerHTML a proposito: el nombre de la
 // emisora viene de un movil, y con innerHTML un nombre con etiquetas
 // dentro se ejecutaria como codigo. Con textContent se escribe tal cual.
+//
+// valor: Text --> celda() --> td
 // ----------------------------------------------------------------------
 function celda( valor ) {
 
@@ -91,6 +95,8 @@ function celda( valor ) {
 //   id, tipo, valor, nombre_emisora, fecha.
 //
 // Si algún dato no viene, celda() deja la celda vacía.
+//
+// cuerpo: tbody, medicion: Medicion Vista --> pintarFila() -->
 // ----------------------------------------------------------------------
 function pintarFila( cuerpo, medicion ) {
 
@@ -112,6 +118,8 @@ function pintarFila( cuerpo, medicion ) {
 // El servidor ya la manda de la mas nueva a la mas antigua, asi que:
 //   - la primera es "la ultima medida registrada";
 //   - todas las demas son "medidas anteriores".
+//
+// mediciones: [ Medicion Vista ] --> pintarMediciones() -->
 // ----------------------------------------------------------------------
 function pintarMediciones( lista ) {
 
@@ -144,6 +152,8 @@ function pintarMediciones( lista ) {
 
 // ----------------------------------------------------------------------
 // Si el servidor falla, se enseña el motivo que ha dado.
+//
+// mensaje: Text --> pintarError() -->
 // ----------------------------------------------------------------------
 function pintarError( mensaje ) {
   aviso( "ERROR: " + mensaje );
@@ -156,6 +166,8 @@ function pintarError( mensaje ) {
 // Esto espera a que el navegador haya leido todo el HTML. Si se hiciera
 // aqui mismo, el <p> y las tablas todavia no existirian y no se veria
 // nada. Por eso esta funcion solo se llama al final.
+//
+// iniciar() -->
 // ----------------------------------------------------------------------
 function iniciar() {
 

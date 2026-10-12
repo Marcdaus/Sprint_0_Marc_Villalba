@@ -30,6 +30,8 @@ function consultarMediciones( callbackExito, callbackError ) {
 
 	// ---------------------------------------------------
 	// Envoltorio: llama al callback solo si no se ha llamado antes.
+	//
+	// callback: [Medicion] | Text -->, valor: [Medicion] | Text --> responder() -->
 	// ---------------------------------------------------
 	function responder( callback, valor ) {
 

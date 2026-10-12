@@ -43,6 +43,7 @@ public class ServicioEscuharBeacons  extends IntentService {
     // La UI se engancha con setObservadorDeTrama() y recibe un texto con la ultima trama.
     // ---------------------------------------------------------------------------------------------
     public interface ObservadorDeTrama {
+        // texto: Text --> mostrarEnPantalla() -->
         void mostrarEnPantalla(String texto);
     }
 
@@ -68,6 +69,7 @@ public class ServicioEscuharBeacons  extends IntentService {
     // ---------------------------------------------------------------------------------------------
     private final PeticionarioREST.RespuestaREST respuestaDelPOST = new PeticionarioREST.RespuestaREST() {
         @Override
+        // codigo: Z, cuerpo: Text --> callback() -->
         public void callback(int codigo, String cuerpo) {
             // esta respuesta solo llega si se ha postureado una medicion NUESTRA,
             // asi que va con la etiqueta "tramaMarc" (lo de nuestro beacon)
@@ -94,11 +96,13 @@ public class ServicioEscuharBeacons  extends IntentService {
     private final ScanCallback callbackDelEscaneo = new ScanCallback() {
 
         @Override
+        // callbackType: Z, resultado: ScanResult --> onScanResult() -->
         public void onScanResult(int callbackType, ScanResult resultado) {
             manejarBeaconRecibido(resultado);
         }
 
         @Override
+        // resultados: [ScanResult] --> onBatchScanResults() -->
         public void onBatchScanResults(List<ScanResult> resultados) {
             for (ScanResult resultado : resultados) {
                 manejarBeaconRecibido(resultado);
@@ -106,6 +110,7 @@ public class ServicioEscuharBeacons  extends IntentService {
         }
 
         @Override
+        // errorCode: Z --> onScanFailed() -->
         public void onScanFailed(int errorCode) {
             Log.d(ETIQUETA_LOG, " ServicioEscucharBeacons.onScanFailed: errorCode=" + errorCode);
         }
@@ -114,6 +119,7 @@ public class ServicioEscuharBeacons  extends IntentService {
 
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
+    // --> ServicioEscuharBeacons() -->
     public ServicioEscuharBeacons(  ) {
         super("HelloIntentService");
 
@@ -140,6 +146,7 @@ public class ServicioEscuharBeacons  extends IntentService {
 
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
+    // --> parar() -->
     public void parar () {
 
         Log.d(ETIQUETA_LOG, " ServicioEscucharBeacons.parar() " );
@@ -158,6 +165,7 @@ public class ServicioEscuharBeacons  extends IntentService {
 
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
+    // --> onDestroy() -->
     public void onDestroy() {
 
         Log.d(ETIQUETA_LOG, " ServicioEscucharBeacons.onDestroy() " );
@@ -174,6 +182,7 @@ public class ServicioEscuharBeacons  extends IntentService {
      * stops the service, as appropriate.
      */
     @Override
+    // intencion: Intencion --> onHandleIntent() -->
     protected void onHandleIntent(Intent intent) {
 
         this.tiempoDeEspera = intent.getLongExtra("tiempoDeEspera", /* default */ 50000);

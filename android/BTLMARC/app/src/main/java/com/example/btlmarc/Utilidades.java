@@ -18,6 +18,7 @@ public class Utilidades {
 
     // -------------------------------------------------------------------------------
     // -------------------------------------------------------------------------------
+    // texto: Text --> stringToBytes() --x --> [Z]
     public static byte[] stringToBytes ( String texto ) {
         return texto.getBytes();
         // byte[] b = string.getBytes(StandardCharsets.UTF_8); // Ja
@@ -25,6 +26,7 @@ public class Utilidades {
 
     // -------------------------------------------------------------------------------
     // -------------------------------------------------------------------------------
+    // uuid: Text --> stringToUUID() --x --> UUID
     public static UUID stringToUUID( String uuid ) {
         if ( uuid.length() != 16 ) {
             throw new Error( "stringUUID: string no tiene 16 caracteres ");
@@ -44,18 +46,21 @@ public class Utilidades {
 
     // -------------------------------------------------------------------------------
     // -------------------------------------------------------------------------------
+    // uuid: UUID --> uuidToString() --x --> Text
     public static String uuidToString ( UUID uuid ) {
         return bytesToString( dosLongToBytes( uuid.getMostSignificantBits(), uuid.getLeastSignificantBits() ) );
     } // ()
 
     // -------------------------------------------------------------------------------
     // -------------------------------------------------------------------------------
+    // uuid: UUID --> uuidToHexString() --x --> Text
     public static String uuidToHexString ( UUID uuid ) {
         return bytesToHexString( dosLongToBytes( uuid.getMostSignificantBits(), uuid.getLeastSignificantBits() ) );
     } // ()
 
     // -------------------------------------------------------------------------------
     // -------------------------------------------------------------------------------
+    // bytes: [Z] --> bytesToString() --x --> Text
     public static String bytesToString( byte[] bytes ) {
         if (bytes == null ) {
             return "";
@@ -70,6 +75,7 @@ public class Utilidades {
 
     // -------------------------------------------------------------------------------
     // -------------------------------------------------------------------------------
+    // masSignificativos: N, menosSignificativos: N --> dosLongToBytes() --x --> [Z]_16
     public static byte[] dosLongToBytes( long masSignificativos, long menosSignificativos ) {
         ByteBuffer buffer = ByteBuffer.allocate( 2 * Long.BYTES );
         buffer.putLong( masSignificativos );
@@ -85,6 +91,7 @@ public class Utilidades {
     // cada segundo, asi que con BigInteger acabaria dando negativo.
     // El txPower si puede ser negativo de verdad (0xC6 = -58 dBm), y para eso
     // esta leerByteConSigno(), que devuelve el byte tal cual.
+    // bytes: [Z] --> bytesToInt() --x --> Z
     public static int bytesToInt( byte[] bytes ) {
 
         if (bytes == null || bytes.length == 0) {
@@ -103,18 +110,21 @@ public class Utilidades {
 
     // -------------------------------------------------------------------------------
     // -------------------------------------------------------------------------------
+    // b: Z --> leerByteConSigno() --x --> Z
     public static int leerByteConSigno( byte b ) {
         return b; // en Java un byte ya es signed, asi que solo se devuelve
     }
 
     // -------------------------------------------------------------------------------
     // -------------------------------------------------------------------------------
+    // bytes: [Z] --> bytesToLong() --x --> Z
     public static long bytesToLong( byte[] bytes ) {
         return new BigInteger(bytes).longValue();
     }
 
     // -------------------------------------------------------------------------------
     // -------------------------------------------------------------------------------
+    // bytes: [Z] --> bytesToIntOK() --x --> Z
     public static int bytesToIntOK( byte[] bytes ) {
         if (bytes == null ) {
             return 0;
@@ -153,6 +163,7 @@ public class Utilidades {
 
     // -------------------------------------------------------------------------------
     // -------------------------------------------------------------------------------
+    // bytes: [Z] --> bytesToHexString() --x --> Text
     public static String bytesToHexString( byte[] bytes ) {
 
         if (bytes == null ) {

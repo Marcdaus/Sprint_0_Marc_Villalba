@@ -85,10 +85,12 @@ public class MainActivity extends AppCompatActivity {
     // ---------------------------------------------------------------------------------------------
     private final ServicioEscuharBeacons.ObservadorDeTrama observador = new ServicioEscuharBeacons.ObservadorDeTrama() {
         @Override
+        // texto: Text --> mostrarEnPantalla() -->
         public void mostrarEnPantalla(String texto) {
             // el servicio puede avisar desde un hilo de BLE: para pintar, al hilo principal
             runOnUiThread(new Runnable() {
                 @Override
+                // --> run() -->
                 public void run() {
                     textoUltimaTrama.setText("Ultima trama: " + texto);
                 }
@@ -104,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
     // Arranca el servicio. Antes pide los permisos y comprueba el bluetooth: sin eso
     // el servicio arranca pero no ve ningun beacon.
     // ---------------------------------------------------------------------------------------------
+    // v: Vista --> botonArrancarServicioPulsado() -->
     public void botonArrancarServicioPulsado( View v ) {
         Log.d(ETIQUETA_LOG, " boton arrancar servicio Pulsado" );
 
@@ -133,6 +136,7 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
+    // v: Vista --> botonDetenerServicioPulsado() -->
     public void botonDetenerServicioPulsado( View v ) {
 
         if ( this.elIntentDelServicio == null ) {
@@ -153,6 +157,7 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
+    // v: Vista --> botonBuscarDispositivosBTLEPulsado() -->
     public void botonBuscarDispositivosBTLEPulsado( View v ) {
         Log.d(AnalizadorBeacons.ETIQUETA_TRAMA, " boton buscar dispositivos BTLE Pulsado" );
         this.buscarTodosLosDispositivosBTLE();
@@ -160,6 +165,7 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
+    // v: Vista --> botonBuscarNuestroDispositivoBTLEPulsado() -->
     public void botonBuscarNuestroDispositivoBTLEPulsado( View v ) {
         Log.d(AnalizadorBeacons.ETIQUETA_TRAMA, " boton nuestro dispositivo BTLE Pulsado" );
         this.buscarEsteDispositivoBTLE( AnalizadorBeacons.UUID_BEACON );
@@ -167,6 +173,7 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
+    // v: Vista --> botonDetenerBusquedaDispositivosBTLEPulsado() -->
     public void botonDetenerBusquedaDispositivosBTLEPulsado( View v ) {
         Log.d(AnalizadorBeacons.ETIQUETA_TRAMA, " boton detener busqueda dispositivos BTLE Pulsado" );
         this.detenerBusquedaDispositivosBTLE();
@@ -176,6 +183,7 @@ public class MainActivity extends AppCompatActivity {
     // Arranca el escaner y avisa por el log de CADA beacon que vea, sin filtrar: sirve
     // para ver que hay cerca y comparar tramas.
     // ---------------------------------------------------------------------------------------------
+    // --> buscarTodosLosDispositivosBTLE() -->
     private void buscarTodosLosDispositivosBTLE() {
 
         String etiqueta = AnalizadorBeacons.ETIQUETA_TRAMA;
@@ -191,18 +199,21 @@ public class MainActivity extends AppCompatActivity {
 
         this.callbackDelEscaneo = new ScanCallback() {
             @Override
+            // callbackType: Z, resultado: ScanResult --> onScanResult() -->
             public void onScanResult( int callbackType, ScanResult resultado ) {
                 super.onScanResult(callbackType, resultado);
                 mostrarInformacionDispositivoBTLE( resultado );
             }
 
             @Override
+            // results: [ScanResult] --> onBatchScanResults() -->
             public void onBatchScanResults(List<ScanResult> results) {
                 super.onBatchScanResults(results);
                 Log.d(etiqueta, " buscarTodosLosDispositivosBTLE(): " + results.size() + " beacons de golpe");
             }
 
             @Override
+            // errorCode: Z --> onScanFailed() -->
             public void onScanFailed(int errorCode) {
                 super.onScanFailed(errorCode);
                 Log.d(etiqueta, " buscarTodosLosDispositivosBTLE(): onScanFailed() errorCode=" + errorCode );
@@ -244,6 +255,7 @@ public class MainActivity extends AppCompatActivity {
     //     dispositivos que NO son iBeacon, pero deja pasar TODOS los iBeacon
     //     ajenos, que es lo que hacia esNuestroBeacon() justo despues.
     // ---------------------------------------------------------------------------------------------
+    // nombre: Text --> buscarEsteDispositivoBTLE() -->
     private void buscarEsteDispositivoBTLE( String dispositivoBuscado ) {
 
         String etiqueta = AnalizadorBeacons.ETIQUETA_TRAMA;
@@ -258,6 +270,7 @@ public class MainActivity extends AppCompatActivity {
 
         this.callbackDelEscaneo = new ScanCallback() {
             @Override
+            // callbackType: Z, resultado: ScanResult --> onScanResult() -->
             public void onScanResult( int callbackType, ScanResult resultado ) {
                 super.onScanResult(callbackType, resultado);
 
@@ -287,11 +300,13 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
+            // results: [ScanResult] --> onBatchScanResults() -->
             public void onBatchScanResults(List<ScanResult> results) {
                 super.onBatchScanResults(results);
             }
 
             @Override
+            // errorCode: Z --> onScanFailed() -->
             public void onScanFailed(int errorCode) {
                 super.onScanFailed(errorCode);
                 Log.d(etiqueta, " buscarEsteDispositivoBTLE(): onScanFailed() errorCode=" + errorCode );
@@ -320,6 +335,7 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
+    // --> detenerBusquedaDispositivosBTLE() -->
     private void detenerBusquedaDispositivosBTLE() {
 
         if ( this.callbackDelEscaneo == null || this.elEscanner == null ) {
@@ -345,6 +361,7 @@ public class MainActivity extends AppCompatActivity {
     // "tag:tramaMarc" en logcat se ve unicamente nuestro beacon, sin el ruido de los
     // cientos de dispositivos ajenos que se descartan.
     // ---------------------------------------------------------------------------------------------
+    // resultado: ScanResult --> mostrarInformacionDispositivoBTLE() <--
     private void mostrarInformacionDispositivoBTLE( ScanResult resultado ) {
 
         if (resultado == null || resultado.getScanRecord() == null) {
@@ -387,6 +404,7 @@ public class MainActivity extends AppCompatActivity {
     // Desde Android 12, getName() y getAddress() necesitan BLUETOOTH_CONNECT en tiempo
     // de ejecucion. Si no esta, lanzan SecurityException: aqui se captura y se avisa.
     // ---------------------------------------------------------------------------------------------
+    // Text <-- nombreSeguro() <-- dispositivo: BluetoothDevice
     private String nombreSeguro( BluetoothDevice dispositivo ) {
         try {
             return dispositivo.getName();
@@ -397,6 +415,7 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
+    // Text <-- direccionSegura() <-- dispositivo: BluetoothDevice
     private String direccionSegura( BluetoothDevice dispositivo ) {
         try {
             return dispositivo.getAddress();
@@ -413,6 +432,7 @@ public class MainActivity extends AppCompatActivity {
     // Manda un GET al servidor y enseña el codigo y el cuerpo de la respuesta. Sirve para
     // comprobar que el movil llega al PC (misma wifi) antes de esperar a los beacons.
     // ---------------------------------------------------------------------------------------------
+    // v: Vista --> botonProbarRestPulsado() -->
     public void botonProbarRestPulsado( View v ) {
         Log.d(ETIQUETA_LOG, " boton probar REST Pulsado" );
 
@@ -429,6 +449,7 @@ public class MainActivity extends AppCompatActivity {
         elPeticionario.hacerPeticionREST(METODO_GET, url, null,
                 new PeticionarioREST.RespuestaREST() {
                     @Override
+                    // codigo: Z, cuerpo: Text --> callback() -->
                     public void callback(int codigo, String cuerpo) {
                         // onPostExecute() ya viene al hilo principal, asi que se puede pintar
                         textoRespuestaRest.setText("Respuesta REST de " + url
@@ -446,6 +467,7 @@ public class MainActivity extends AppCompatActivity {
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
     @Override
+    // estado: EstadoActividad --> onCreate() -->
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -471,6 +493,7 @@ public class MainActivity extends AppCompatActivity {
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
     @Override
+    // --> onDestroy() -->
     protected void onDestroy() {
         this.detenerBusquedaDispositivosBTLE(); // no dejar el escaner de prueba encendido
         ServicioEscuharBeacons.setObservadorDeTrama(null); // no dejar el enganche puesto
@@ -566,6 +589,7 @@ public class MainActivity extends AppCompatActivity {
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
     @Override
+    // codigo: N, permisos: [Text], concesiones: [Z] --> onRequestPermissionsResult() -->
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 

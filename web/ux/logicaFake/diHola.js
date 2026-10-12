@@ -14,6 +14,8 @@
 // usuario: se enviará de forma implícita en la sesión
 // (nombre:Texto, saludo:Texto) | error:Texto : devuelto via callback( err, res )
 //
+// cb: ( error: Text, resultado: ( nombre: Text, saludo: Text ) ) --> diHola() -->
+//
 // ---------------------------------------------------
 function diHola( cb ) {
 

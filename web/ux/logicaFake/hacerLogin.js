@@ -13,6 +13,8 @@
 //
 // (Boolean devuelto via callback)
 //
+// nombre: Text, password: Text, cb: Boolean --> hacerLogin() -->
+//
 // ---------------------------------------------------
 function hacerLogin( nombre, password, cb ) {
 

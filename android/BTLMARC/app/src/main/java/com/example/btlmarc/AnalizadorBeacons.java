@@ -27,7 +27,7 @@ public class AnalizadorBeacons {
     // OJO: esta IP es la del PC en la red de casa, y el router la puede
     // cambiar (cada vez que se reinicia, por ejemplo). Hay que mirarla en el
     // PC antes de la demo. En Windows: "ipconfig" y buscar IPv4.
-    public static final String IP_SERVIDOR     = "192.168.18.14";         // IP del PC con el servidor REST
+    public static final String IP_SERVIDOR     = "192.168.0.102";       // IP del PC con el servidor REST
     public static final int    PUERTO_SERVIDOR = 8080;                    // puerto del servidor REST
     // La ruta lleva "servidor/" delante porque el servidor PHP se arranca con
     // raiz en la carpeta Sprint_0_Marc_Villalba, y ahi la API cuelga de

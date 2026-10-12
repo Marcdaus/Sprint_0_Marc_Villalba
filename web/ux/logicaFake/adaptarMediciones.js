@@ -68,6 +68,8 @@ function adaptarMediciones( mediciones ) {
 // porque el valor puede ser justo 0 y con "||" se perdería (0 es falsy en
 // JavaScript). Con esto se distingue "viene con 0" de "no viene".
 //
+// B <-- viene() <-- objeto: Medicion, campo: Text
+//
 // ---------------------------------------------------
 function viene( objeto, campo ) {
 

@@ -36,6 +36,7 @@ public:
   using CallbackConexionTerminada = void ( uint16_t connHandle, uint8_t reason);
 
   // .........................................................
+  // nombre: Text, fabricanteID: N, txPower: Z --> EmisoraBLE() -->
   // ====== constructor =====
   EmisoraBLE( const char * nombreEmisora_, const uint16_t fabricanteID_,const int8_t txPower_ ) : nombreEmisora( nombreEmisora_ ) ,fabricanteID( fabricanteID_ ) ,txPower( txPower_ )
   {
@@ -61,6 +62,8 @@ public:
   } // encenderEmisora()
 
   // .........................................................
+  // cbce: CallbackConexionEstablecida, cbct: CallbackConexionTerminada --> encenderEmisora() -->
+  // .........................................................
   void encenderEmisora( CallbackConexionEstablecida cbce,
 						CallbackConexionTerminada cbct ) {
 
@@ -84,13 +87,14 @@ public:
   }  // ()
   
   // .........................................................
-  // estaAnunciando() -> Boleano
+  // B <-- estaAnunciando() <--
   // .........................................................
   bool estaAnunciando() {
 	return Bluefruit.Advertising.isRunning();
   } // ()
 
   // .........................................................
+  // uuid: [N]_16, major: Z, minor: Z, rssi: N --> emitirAnuncioIBeacon() -->
   // Emite el iBeacon y lo deja anunciando.
   // NO vuelve a tocar el nombre: eso lo hace encenderEmisora(), una sola vez
   // (ver el aviso de arriba sobre la fuga de memoria del pool de ScanResponse).
@@ -178,6 +182,9 @@ public:
 
 	const uint8_t tamanyoCarga = strlen( carga );
   */
+	// .........................................................
+  // carga: Text, tamanyoCarga: N --> emitirAnuncioIBeaconLibre() -->
+  // .........................................................
   void emitirAnuncioIBeaconLibre( const char * carga, const uint8_t tamanyoCarga ) {
 
 	(*this).detenerAnuncio(); 
@@ -236,9 +243,11 @@ public:
 	Bluefruit.Advertising.start( 0 ); 
 
 	Globales::elPuerto.escribir( "emitiriBeacon libre  Bluefruit.Advertising.start( 0 );  \n");
-  } // ()
+  } // emitirAnuncioIBeaconLibre()
 
   // .........................................................
+  // servicio: ServicioEnEmisora --> anyadirServicio() -->
+  // B <--
   // .........................................................
   bool anyadirServicio( ServicioEnEmisora & servicio ) {
 
@@ -258,11 +267,16 @@ public:
 
   
   // .........................................................
+  // servicio: ServicioEnEmisora --> anyadirServicioConSusCaracteristicas() -->
+  // B <--
   // .........................................................
   bool anyadirServicioConSusCaracteristicas( ServicioEnEmisora & servicio ) { 
 	return (*this).anyadirServicio( servicio );
   } // 
 
+  // .........................................................
+  // servicio: ServicioEnEmisora, carac: Caracteristica, resto...: T --> anyadirServicioConSusCaracteristicas() -->
+  // B <--
   // .........................................................
   template <typename ... T>
   bool anyadirServicioConSusCaracteristicas( ServicioEnEmisora & servicio,
@@ -275,6 +289,9 @@ public:
 	
   } // ()
 
+  // .........................................................
+  // servicio: ServicioEnEmisora, resto...: T --> anyadirServicioConSusCaracteristicasYActivar() -->
+  // B <--
   // .........................................................
   template <typename ... T>
   bool anyadirServicioConSusCaracteristicasYActivar( ServicioEnEmisora & servicio,
@@ -290,18 +307,22 @@ public:
   } // ()
 
   // .........................................................
+  // cb: CallbackConexionEstablecida --> instalarCallbackConexionEstablecida() -->
   // .........................................................
   void instalarCallbackConexionEstablecida( CallbackConexionEstablecida cb ) {
 	Bluefruit.Periph.setConnectCallback( cb );
   } // ()
 
   // .........................................................
+  // cb: CallbackConexionTerminada --> instalarCallbackConexionTerminada() -->
   // .........................................................
   void instalarCallbackConexionTerminada( CallbackConexionTerminada cb ) {
 	Bluefruit.Periph.setDisconnectCallback( cb );
   } // ()
 
   // .........................................................
+  // connHandle: N --> getConexion() -->
+  // Conexion <--
   // .........................................................
   BLEConnection * getConexion( uint16_t connHandle ) {
 	return Bluefruit.Connection( connHandle );

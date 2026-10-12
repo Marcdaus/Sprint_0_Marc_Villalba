@@ -10,6 +10,7 @@
 //
 // usuario:Texto -> diHola() -> (nombre:Texto, saludo:Texto) 
 //
+// usuario: Text --> diHola() --x --> ( nombre: Text, saludo: Text )
 // -------------------------------------------------
 
 function diHola( $usuario ) {
