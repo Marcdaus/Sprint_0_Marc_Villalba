@@ -1,0 +1,197 @@
+0. REQUISITOS: HACE FALTA XAMPP
+-------------------------------
+En este equipo HABA PHP de verdad. Lo unico que habia era un php.exe
+suelto y roto dentro de una carpeta temporal, al que le faltaba el
+php8.dll, y por eso salia el error:
+
+	"no se ha encontrado el programa php8dill"
+
+Para que esto funcione hay que instalar XAMPP:
+
+	1) Descargarlo de https://www.apachefriends.org/es/index.html
+	2) Instalarlo. Hay que aceptarlo como administrador.
+	3) Abrir el panel de control de XAMPP y darle a "Start" al MySQL.
+	   El Apache no hace falta: el servidor de PHP se arranca a mano
+	   con php -S, como se explica mas abajo.
+	4) OJO: XAMPP NO mete PHP en el PATH del sistema. O sea, que despues
+	   de instalar, "php" en una consola seguira sin encontrarse.
+	   Comprobarlo con la ruta completa:
+
+		C:\xampp\php\php.exe -v
+
+	   Y si se quiere poder escribir solo "php", hay que anadir
+	   C:\xampp\php al PATH de las variables de entorno.
+
+La base de datos proyecto_beacon y la tabla mediciones las crea el
+PROMPT 5 con phpMyAdmin (http://localhost/phpmyadmin). Hasta entonces, los
+endpoints de communication/ responden 500 porque no hay donde escribir.
+
+Aviso: hay una extension de curl que hace falta para las pruebas de
+endpoints. XAMPP la trae activada de serie, asi que en principio no hay
+que tocar nada.
+
+
+1. Hay que arrancar un servidor http+php. OJO: la raiz NO es esta
+carpeta (src/communication/), sino la de arriba del todo, Sprint_0_Marc_Villalba,
+porque ahi estan tanto la API (src/) como la web (src/gui/). Desde
+Sprint_0_Marc_Villalba:
+
+	php -S localhost:8080 -t .
+
+2. En un navegador cargar:
+
+   http://localhost:8080/src/gui/Aplicacion.html
+
+
+3. ENDPOINTS REST (PROMPT 3)
+----------------------------
+La app Android manda las mediciones por POST a:
+
+	http://<IP-DE-ESTE-PC>:8080/src/communication/guardarMedicion.php
+
+y las lee por GET de:
+
+	http://<IP-DE-ESTE-PC>:8080/src/communication/recuperarMedicion.php
+
+Ojo al "src/" de delante: va porque la raiz del servidor es
+Sprint_0_Marc_Villalba. La app tiene esa ruta en AnalizadorBeacons.java
+(RUTA_GUARDAR), y la web la tiene en src/frontend_business_logic/configuracion.js
+(RUTA_RECUPERAR).
+
+La IP se cambia en la app, en AnalizadorBeacons.java (IP_SERVIDOR).
+Este fichero tiene que estar accesible desde el movil: si el movil no
+llega, casi siempre es que el servidor de PHP solo esta escuchando en
+localhost. Se arranca escuchando en la IP de la red con:
+
+	php -S 0.0.0.0:8080 -t .
+
+Ademas, el firewall de Windows tiene que dejar pasar el puerto 8080.
+
+4. PRUEBAS (PROMPT 3)
+--------------------
+Las pruebas NO se ejecutan solas. El que las corre es el propietario.
+
+Las pruebas de los endpoints (peticiones de verdad por http) necesitan el
+servidor en marcha. En una consola, desde Sprint_0_Marc_Villalba:
+
+	php -S localhost:8080 -t .
+
+En otra consola, desde la carpeta src/pruebas/:
+
+	cd pruebas
+	php testEndpointsRest.php
+
+Tiene que decir "0 fallos". El codigo de salida es 0 si todo pasa y 1 si
+hay algun fallo.
+
+	OJO: src/pruebas/testAuxiliaresRest.php NO FUNCIONA, no lo ejecutes.
+	Las pruebas de los auxiliares quedan SIN CUBRIR por ahora, asi que lo
+	que se prueba de verdad es lo que ve el cliente (codigo HTTP y JSON
+	de la respuesta), que es lo que importa.
+	El fallo es este: para usar parsearJSON() y extraerFiltros() el
+	fichero tiene que incluir (require) los endpoints de communication/, pero al
+	incluirlos tambien se ejecuta su codigo, que comprueba el metodo HTTP.
+	En consola no hay metodo HTTP, asi que guardarMedicion.php responde un
+	405 y llama a exit(), que corta el script de pruebas al instante:
+	solo imprime {"error":"Metodo no permitido"} y no llega a hacer ninguna
+	prueba. El exit() no se puede tapar con output buffering.
+	Para arreglarlo habria que meter una guardia en los endpoints del tipo
+	if (realpath($_SERVER['SCRIPT_FILENAME']) === __FILE__) alrededor del
+	bloque que atiende la peticion, para que solo se ejecute cuando al
+	endpoint lo pide el navegador y no otro script. De momento se ha
+	decidido no tocar los endpoints por eso.
+
+testEndpointsRest.php necesita la extension "curl" de PHP. Si al
+ejecutarlo dice que no existe la funcion curl_init(), hay que activarla
+en php.ini, quitando el ; (punto y coma) de delante de la linea:
+
+	extension=curl
+
+Comprobar la sintaxis de un solo fichero:
+
+	php -l rest\guardarMedicion.php
+	php -l rest\recuperarMedicion.php
+
+5. LOGICA DE NEGOCIO (PROMPT 4) - CUIDADO, NECESITA LA BASE DE DATOS
+---------------------------------------------------------------------
+La logica de negocio ya es la DE VERDAD, en business_logic/LogicaDeNegocio.php:
+
+	business_logic/LogicaDeNegocio.php   las dos funciones publicas (RN1, RN2, RN3)
+	business_logic/configuracion.php     host, usuario, contraseña y nombre de la BD
+	business_logic/guardarMedicion.php   puntero: carga LogicaDeNegocio.php
+	business_logic/recuperarMedicion.php puntero: carga LogicaDeNegocio.php
+
+Los dos ficheros "puntero" estan porque los endpoints del PROMPT 3 buscan
+la logica en business_logic/guardarMedicion.php y business_logic/recuperarMedicion.php, y
+asi los endpoints no hay que tocarlos. Las dos funciones de verdad viven
+juntas en LogicaDeNegocio.php porque comparten la conexion y los helpers.
+
+AHORA LOS ENDPOINTS NECESITAN MySQL. Antes usaban el stub de src/pruebas/, que
+era tonto y no necesitaba base de datos. Ahora hacen INSERT y SELECT de
+verdad contra la tabla mediciones, asi que:
+
+	- MySQL tiene que estar encendido (XAMPP)
+	- la base de datos proyecto_beacon tiene que existir y tener la tabla
+	  mediciones. Eso es el PROMPT 5, mas abajo esta como se crea.
+
+Si no cumple esas dos cosas, POST guardarMedicion.php y
+GET recuperarMedicion.php responden 500.
+
+La conexion sale de business_logic/configuracion.php: localhost, puerto 3306,
+usuario root, sin contraseña (los valores por defecto de XAMPP). Si los
+cambias, se cambian SOLO en ese fichero.
+
+6. BASE DE DATOS (PROMPT 5)
+---------------------------
+	database/crearBaseDeDatos.sql   el DDL: crea proyecto_beacon, la tabla
+	                                   mediciones y mete tres filas de ejemplo
+
+CREAR LA BASE DE DATOS, con phpMyAdmin (http://localhost/phpmyadmin):
+entra con el usuario root y sin contraseña, pestaña "Importar", elige el
+fichero database/crearBaseDeDatos.sql y dale a Continuar. Con eso ya
+existe la tabla y el movil puede empezar a guardar.
+
+Ojo: se puede volver a importar sin miedo, porque los CREATE son IF NOT
+EXISTS y no borran nada. Lo unico que se duplica son las tres filas de
+ejemplo del final. Para el valor de la demo hay que cambiar
+@valorEjemplo, que esta en el bloque de VARIABLES MODIFICABLES del
+principio del fichero.
+
+7. QUE PRUEBAS SIGUEN SIENDO UTILES
+----------------------------------
+	php testLogicaDeNegocio.php   SI. No necesita servidor, ni MySQL, ni
+	                              curl: lleva su propio PDO falso. Comprueba
+	                              las reglas de negocio (RN1, RN2, RN3).
+
+	php testBaseDeDatos.php       SI, pero necesita MySQL encendido. Trabaja
+	                              sobre una base de datos desechable llamada
+	                              proyecto_beacon_test, le aplica el DDL real,
+	                              comprueba que el esquema es el correcto y
+	                              borra esa base al terminar. NO toca
+	                              proyecto_beacon, la de verdad.
+
+	php testEndpointsRest.php     NO de momento. Necesita la base de datos y
+	                              ademas espera los datos fijos del stub
+	                              (id 42). Rehacerlo cuando haya tabla.
+
+	php testAuxiliaresRest.php    NO. Esta roto, ver seccion 4.
+
+	stubLogicaDeNegocio.php       Ha dejado de usarse: los endpoints ya
+	                              encuentran la logica de verdad. Se puede
+	                              borrar cuando quieras; se ha dejado
+	                              puesto por si hay que volver atras.
+
+Para pasar las que si valen, de una vez:
+
+	php testLogicaDeNegocio.php && php testBaseDeDatos.php
+
+Comprobar la sintaxis de todos los ficheros:
+
+	php -l logica\LogicaDeNegocio.php
+	php -l logica\configuracion.php
+	php -l logica\guardarMedicion.php
+	php -l logica\recuperarMedicion.php
+	php -l rest\guardarMedicion.php
+	php -l rest\recuperarMedicion.php
+	php -l pruebas\testLogicaDeNegocio.php
+	php -l pruebas\testBaseDeDatos.php

@@ -1,5 +1,19 @@
 ========================================
- COMANDOS DEL PROYECTO
+ COMANDOS DEL PROYECTO  (Sprint_0_Marc_Villalba)
+========================================
+
+ESTRUCTURA
+  doc/     los disenos  (xxx_design.md)
+  src/     el codigo, por componente:
+             communication/            endpoints REST (PHP)
+             business_logic/           logica de negocio (PHP)
+             database/                 DDL (SQL)
+             frontend_business_logic/  logica del cliente web (JS)
+             gui/                      paginas web (HTML/CSS)
+             pruebas/                  pruebas (PHP y JS)
+             android/                  app Android (Java)
+             arduino/                  sketch Arduino (C++)
+
 ========================================
 
 ARRANCAR SERVIDOR (PHP)
@@ -21,7 +35,7 @@ ARRANCAR PHPMYADMIN
 ----------------------------------------
 
 IP DEL SERVIDOR EN ANDROID
-  IP_SERVIDOR (android) : BTLMARC\app\src\main\java\com\example\btlmarc\AnalizadorBeacons.java  ->  linea 30
+  IP_SERVIDOR (android) : src\android\BTLMARC\app\src\main\java\com\example\btlmarc\AnalizadorBeacons.java  ->  linea 30
   Hay que poner la IP actual del PC y volver a compilar e instalar la app.
 
 VER LA IP ACTUAL DEL PC
@@ -29,8 +43,50 @@ VER LA IP ACTUAL DEL PC
 
 ----------------------------------------
 
-DIRECCIONES
-  Web (mediciones)  : http://localhost:8080/web/ux/index.html
-  Web (login/app)   : http://localhost:8080/web/ux/Aplicacion.html
-  API REST          : http://localhost:8080/servidor/rest/recuperarMedicion.php
+DIRECCIONES  (con el servidor arrancado)
+  Web (mediciones)  : http://localhost:8080/src/gui/index.html
+  Web (login/app)   : http://localhost:8080/src/gui/Aplicacion.html
+  API REST          : http://localhost:8080/src/communication/recuperarMedicion.php
   phpMyAdmin        : http://localhost/phpmyadmin
+
+----------------------------------------
+
+PRUEBAS  (ejecutar desde la raiz del proyecto)
+
+  Logica de negocio (NO necesita MySQL ni servidor):
+    C:\xampp\php\php.exe -f src\pruebas\testLogicaDeNegocio.php
+    -> tiene que decir "60 pruebas, 0 fallos"
+
+  Base de datos (necesita MySQL encendido; usa proyecto_beacon_test, no la real):
+    C:\xampp\php\php.exe -f src\pruebas\testBaseDeDatos.php
+    -> tiene que decir "29 pruebas, 0 fallos"
+
+  Logica del cliente web (necesita Node):
+    "C:\Program Files\nodejs\node.exe" src\pruebas\pruebasLogicaFake.js
+    -> tiene que decir "33 pruebas, 0 fallos"
+
+  Endpoints REST por HTTP (necesita el servidor arrancado, en otra consola):
+    C:\xampp\php\php.exe -f src\pruebas\testEndpointsRest.php
+
+  Nota: src\pruebas\testAuxiliaresRest.php NO funciona (ver 00-Leeme.txt de communication).
+
+----------------------------------------
+
+COMPROBAR SINTAXIS
+
+  PHP:
+    C:\xampp\php\php.exe -l src\communication\guardarMedicion.php
+    C:\xampp\php\php.exe -l src\communication\recuperarMedicion.php
+    C:\xampp\php\php.exe -l src\business_logic\LogicaDeNegocio.php
+    C:\xampp\php\php.exe -l src\business_logic\configuracion.php
+    C:\xampp\php\php.exe -l src\business_logic\guardarMedicion.php
+    C:\xampp\php\php.exe -l src\business_logic\recuperarMedicion.php
+    C:\xampp\php\php.exe -l src\pruebas\testLogicaDeNegocio.php
+    C:\xampp\php\php.exe -l src\pruebas\testBaseDeDatos.php
+
+  JavaScript:
+    "C:\Program Files\nodejs\node.exe" --check src\frontend_business_logic\configuracion.js
+    "C:\Program Files\nodejs\node.exe" --check src\frontend_business_logic\construirURL.js
+    "C:\Program Files\nodejs\node.exe" --check src\frontend_business_logic\adaptarMediciones.js
+    "C:\Program Files\nodejs\node.exe" --check src\frontend_business_logic\formatearFecha.js
+    "C:\Program Files\nodejs\node.exe" --check src\frontend_business_logic\consultarMediciones.js
