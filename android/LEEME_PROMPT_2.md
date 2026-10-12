@@ -66,8 +66,10 @@ public static final int    RSSI_MINIMO     = -127;           // -127 = no descar
 **Ojo con `IP_SERVIDOR`**: `192.168.1.5` es un valor de ejemplo. Cámbialo por la
 IP real del PC donde esté el servidor (PROMPT 3).
 
-El `minor` **no** está en ese bloque a propósito: se lee de la trama del beacon en
-cada lectura (`interpretarValor()`), nunca es una constante.
+El valor de la medición **no** está en ese bloque a propósito: se lee de la trama
+del beacon en cada lectura (`interpretarValor()`), nunca es una constante. Lo mismo
+con el tipo: viaja codificado en el `major` y `tipoDeMedicion()` lo pasa a texto
+(`"CO2"`, `"temperatura"`, `"prueba"`).
 
 ## Pruebas
 

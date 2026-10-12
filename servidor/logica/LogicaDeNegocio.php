@@ -1,4 +1,11 @@
 <?php
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: PHP
+// Curso: 3ºGTI
+// =====================================
+
 
 // ===========================================================================
 // LogicaDeNegocio.php  --  PROMPT 4 (logica de negocio, la verdadera)
@@ -26,10 +33,12 @@
 //     4. Responder 200 con la lista de mediciones.
 //
 // REGLAS DE NEGOCIO (RN):
-//   RN1  la uuid_beacon tiene que ser la conocida (EPSG-GTI-MARC-3A).
-//   RN2  el minor es obligatorio y entero. NO se comprueba contra un valor
-//        fijo: hoy es 1234, pero es un dato del proyecto que se puede
-//        cambiar para la demo, asi que llega desde la app.
+//   RN1  el tipo_medicion tiene que ser uno de los conocidos:
+//        "CO2", "temperatura" o "prueba". La app ya manda el texto; aqui
+//        solo se comprueba que sea uno de esos.
+//   RN2  el valor_medicion es obligatorio y entero. NO se comprueba contra
+//        un valor fijo: hoy es 1234, pero es un dato del proyecto que se
+//        puede cambiar para la demo, asi que llega desde la app.
 //   RN3  la fecha NO la manda ni la app ni el servidor: la pone la BD con
 //        DEFAULT CURRENT_TIMESTAMP, asi que el INSERT no la lleva.
 //   RN4  acceso publico: no hay sesion ni login.
@@ -50,10 +59,11 @@
 // ===========================================================================
 
 // ====== VARIABLES MODIFICABLES ======
-// La uuid que se da por buena (RN1) y cuantas mediciones devuelve como
-// mucho la consulta. El valor del minor NO se configura aqui: es el que
-// manda la app en cada medicion (RN2 no lo fija a un numero).
-$uuidConocido   = 'EPSG-GTI-MARC-3A';
+// Los tipos de medicion que se dan por buenos (RN1) y cuantas mediciones
+// devuelve como mucho la consulta. El valor del valor_medicion NO se
+// configura aqui: es el que manda la app en cada medicion (RN2 no lo fija
+// a un numero).
+$tiposValidos   = [ 'CO2', 'temperatura', 'prueba' ];
 $limiteConsulta = 50;   // ultimas mediciones
 // =====================================
 
@@ -97,7 +107,7 @@ function conexionBD() {
     // de abajo no serviria de nada.
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
 
-    // las filas como array asociativo (uuid_beacon => '...')
+    // las filas como array asociativo (tipo_medicion => '...')
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
 
     // prepares de verdad, no emulados: los ? se tratan en el servidor de
@@ -121,31 +131,31 @@ function conexionBD() {
 // ---------------------------------------------------------------------------
 function validaMedicion( $m ) {
 
-  global $uuidConocido;
+  global $tiposValidos;
 
   $validacion = new stdClass();
   $validacion->ok     = true;
   $validacion->motivo = null;
 
-  // ---- RN1: la uuid tiene que ser la que conocemos ----
-  if ( $m->uuid_beacon !== $uuidConocido ) {
+  // ---- RN1: el tipo_medicion tiene que ser uno de los conocidos ----
+  if ( ! in_array( $m->tipo_medicion, $tiposValidos, true ) ) {
     $validacion->ok     = false;
-    $validacion->motivo = 'uuid_beacon no reconocida';
+    $validacion->motivo = 'tipo_medicion no reconocido';
     return $validacion;
   }
 
-  // ---- RN2: el minor es obligatorio ----
-  if ( $m->minor === null ) {
+  // ---- RN2: el valor_medicion es obligatorio ----
+  if ( $m->valor_medicion === null ) {
     $validacion->ok     = false;
-    $validacion->motivo = 'falta el minor';
+    $validacion->motivo = 'falta el valor_medicion';
     return $validacion;
   }
 
   // ---- RN2: y ademas tiene que ser un entero de verdad ----
-  // si llega "1234" como texto no vale: minor es un numero (SmallInt)
-  if ( ! is_int( $m->minor ) ) {
+  // si llega "1234" como texto no vale: valor_medicion es un numero (SmallInt)
+  if ( ! is_int( $m->valor_medicion ) ) {
     $validacion->ok     = false;
-    $validacion->motivo = 'el minor tiene que ser un numero entero';
+    $validacion->motivo = 'el valor_medicion tiene que ser un numero entero';
     return $validacion;
   }
 
@@ -167,7 +177,7 @@ function respuestaJSON( $codigo, $datos ) {
   $respuesta = new stdClass();
   $respuesta->codigo = $codigo;
   // JSON_UNESCAPED_UNICODE: deja los acentos como acentos, para que el
-  // error "falta el minor" o "medicion" se lea bien en el log del movil
+  // error "falta el valor_medicion" o "medicion" se lea bien en el log del movil
   $respuesta->cuerpo = json_encode( $datos, JSON_UNESCAPED_UNICODE );
 
   return $respuesta;
@@ -249,19 +259,16 @@ function guardarMedicion( $medicion ) {
 
     // ---------------------------------------------------------------
     // 2. INSERTAR. Ojo: la lista de columnas NO lleva fecha (RN3), y los
-    //    seis valores van con ? : nada se pega dentro del SQL.
+    //    tres valores van con ? : nada se pega dentro del SQL.
     // ---------------------------------------------------------------
     $sql = 'INSERT INTO mediciones
-              (uuid_beacon, nombre_emisora, major, minor, tx_power, rssi)
-            VALUES (?, ?, ?, ?, ?, ?)';
+              (nombre_emisora, tipo_medicion, valor_medicion)
+            VALUES (?, ?, ?)';
 
     $sentencia = $pdo->prepare( $sql );
-    $sentencia->execute( [ $medicion->uuid_beacon,
-                           $medicion->nombre_emisora,
-                           $medicion->major,
-                           $medicion->minor,
-                           $medicion->tx_power,
-                           $medicion->rssi ] );
+    $sentencia->execute( [ $medicion->nombre_emisora,
+                           $medicion->tipo_medicion,
+                           $medicion->valor_medicion ] );
 
     // el id lo genera la BD (AUTO_INCREMENT)
     $id = (int) $pdo->lastInsertId();
@@ -291,8 +298,8 @@ function guardarMedicion( $medicion ) {
 // Recibe el FiltroMediciones que le pasa el endpoint REST (todos sus
 // campos son opcionales) y devuelve las mediciones de la BD.
 //
-// Los filtros que no vienen informedos NO se ponen en el WHERE: sin minor
-// no se filtra por minor, y asi.
+// Los filtros que no vienen informedos NO se ponen en el WHERE: sin
+// valor_medicion no se filtra por valor_medicion, y asi.
 // La fecha es de la BD, no la manda la app.
 //
 // f: FiltroMediciones --> recuperarMedicion() --> RespuestaServidor
@@ -310,7 +317,7 @@ function recuperarMedicion( $filtro ) {
     // ---------------------------------------------------------------
     // El "id" tambien se trae: la web (PROMPTs 6 y 7) lo enseña en la
     // primera columna de la tabla. Antes faltaba y no se podia pintar.
-    $columnas = 'id, uuid_beacon, nombre_emisora, major, minor, tx_power, rssi, fecha';
+    $columnas = 'id, nombre_emisora, tipo_medicion, valor_medicion, fecha';
     $sql = 'SELECT ' . $columnas . ' FROM mediciones';
 
     $condiciones = [];
@@ -331,14 +338,14 @@ function recuperarMedicion( $filtro ) {
       $parametros[]  = $limites->hasta;
     }
 
-    if ( $filtro->uuid_beacon !== null ) {
-      $condiciones[] = 'uuid_beacon = ?';
-      $parametros[]  = $filtro->uuid_beacon;
+    if ( $filtro->tipo_medicion !== null ) {
+      $condiciones[] = 'tipo_medicion = ?';
+      $parametros[]  = $filtro->tipo_medicion;
     }
 
-    if ( $filtro->minor !== null ) {
-      $condiciones[] = 'minor = ?';
-      $parametros[]  = (int) $filtro->minor;
+    if ( $filtro->valor_medicion !== null ) {
+      $condiciones[] = 'valor_medicion = ?';
+      $parametros[]  = (int) $filtro->valor_medicion;
     }
 
     if ( count( $condiciones ) > 0 ) {
@@ -357,7 +364,7 @@ function recuperarMedicion( $filtro ) {
     $filas = $sentencia->fetchAll();
 
     // se montan una a una para dejar los numeros como numeros en el JSON
-    // (major, minor, tx_power y rssi), y no como texto
+    // (id, valor_medicion), y no como texto
     $mediciones = [];
 
     foreach ( $filas as $fila ) {
@@ -369,12 +376,9 @@ function recuperarMedicion( $filtro ) {
       // copia campo a campo, anadir el id al SELECT no basta, tambien
       // hay que copiarlo aqui o no llegaria al JSON
       $medicion->id             = (int) $fila['id'];
-      $medicion->uuid_beacon    = $fila['uuid_beacon'];
       $medicion->nombre_emisora = $fila['nombre_emisora'];
-      $medicion->major          = (int) $fila['major'];
-      $medicion->minor          = (int) $fila['minor'];
-      $medicion->tx_power       = (int) $fila['tx_power'];
-      $medicion->rssi           = (int) $fila['rssi'];
+      $medicion->tipo_medicion  = $fila['tipo_medicion'];
+      $medicion->valor_medicion = (int) $fila['valor_medicion'];
       $medicion->fecha          = $fila['fecha'];
 
       $mediciones[] = $medicion;

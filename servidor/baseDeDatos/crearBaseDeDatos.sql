@@ -1,3 +1,10 @@
+-- =====================================
+-- Autor: Marc Villalba Meseguer
+-- Proyecto: Sprint_0_Marc_Villalba
+-- Lenguaje: SQL
+-- Curso: 3ºGTI
+-- =====================================
+
 -- ===========================================================================
 -- crearBaseDeDatos.sql  --  PROMPT 5 (base de datos)
 --
@@ -6,8 +13,8 @@
 -- beacon que el movil ve y sube al servidor.
 --
 -- A QUE OBJETIVO SIRVE: el servidor REST (PROMPTs 3 y 4) inserta aqui el
--- minor que recibe de la app, y la web (PROMPTs 6 y 7) lee de aqui las
--- ultimas mediciones para ensenarlas.
+-- tipo de medicion y su valor que recibe de la app, y la web (PROMPTs 6 y 7)
+-- lee de aqui las ultimas mediciones para ensenarlas.
 --
 -- COMO SE USA ESTE FICHERO: desde phpMyAdmin, en la pestaña "Importar",
 -- eligiendo este fichero. O desde la consola de MySQL:
@@ -25,13 +32,11 @@
 
 -- ====== VARIABLES MODIFICABLES ======
 -- Los valores de ejemplo. Los INSERT del final los leen de aqui, asi que
--- para cambiar el valor del minor de la demo (RN2), se cambia SOLO en
--- @minorEjemplo y se vuelve a ejecutar el script.
-SET @uuidEjemplo    = 'EPSG-GTI-MARC-3A';   -- la uuid que emite la plaquita
-SET @nombreEjemplo  = 'GTI-3A';             -- lo que pone el movil como nombre
-SET @majorEjemplo   = 3584;
-SET @minorEjemplo   = 1234;                 -- valor del proyecto (RN2, modificable)
-SET @txPowerEjemplo = 4;
+-- para cambiar el valor de la demo (RN2), se cambia SOLO en @valorEjemplo
+-- y se vuelve a ejecutar el script.
+SET @nombreEjemplo = 'GTI-3A';   -- lo que pone el movil como nombre
+SET @tipoEjemplo   = 'prueba';   -- RN1: "CO2" | "temperatura" | "prueba"
+SET @valorEjemplo  = 1234;       -- valor del proyecto (RN2, modificable)
 -- =====================================
 
 
@@ -51,12 +56,9 @@ USE proyecto_beacon;
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS mediciones (
   id             INT UNSIGNED      NOT NULL AUTO_INCREMENT,
-  uuid_beacon    VARCHAR(32)       NOT NULL,   -- RN1: "EPSG-GTI-MARC-3A"
   nombre_emisora VARCHAR(20)       NOT NULL,   -- "GTI-3A"
-  major          SMALLINT          NOT NULL,   -- 3584
-  minor          SMALLINT          NOT NULL,   -- RN2: valor del proyecto (hoy 1234; modificable)
-  tx_power       TINYINT           NOT NULL,   -- 4
-  rssi           TINYINT           NOT NULL,   -- -53 (puede ser negativo)
+  tipo_medicion  VARCHAR(20)       NOT NULL,   -- RN1: "CO2" | "temperatura" | "prueba"
+  valor_medicion SMALLINT          NOT NULL,   -- RN2: valor del proyecto (hoy 1234; modificable)
   fecha          DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,   -- RN3: la pone la BD, no la app ni el servidor
   PRIMARY KEY ( id ),
   INDEX idx_mediciones_fecha ( fecha )   -- para el ORDER BY fecha DESC LIMIT 50
@@ -64,7 +66,7 @@ CREATE TABLE IF NOT EXISTS mediciones (
 
 
 -- ---------------------------------------------------------------------------
--- TRES MEDICIONES DE EJEMPLO, para que la web tenga algo que enseñar antes
+-- TRES MEDICIONES DE EJEMPLO, para que la web tenga algo que ensenar antes
 -- de que llegue el movil. Los tres valores salen de las variables de arriba.
 --
 -- OJO: la columna fecha NO aparece en el INSERT. No hay que ponerla: la
@@ -72,11 +74,11 @@ CREATE TABLE IF NOT EXISTS mediciones (
 -- aqui una fecha a mano, el movil dejaria de mandar la fecha, que es justo
 -- lo que no tiene que pasar.
 -- ---------------------------------------------------------------------------
-INSERT INTO mediciones (uuid_beacon, nombre_emisora, major, minor, tx_power, rssi)
-VALUES (@uuidEjemplo, @nombreEjemplo, @majorEjemplo, @minorEjemplo, @txPowerEjemplo, -53);
+INSERT INTO mediciones (nombre_emisora, tipo_medicion, valor_medicion)
+VALUES (@nombreEjemplo, @tipoEjemplo, @valorEjemplo);
 
-INSERT INTO mediciones (uuid_beacon, nombre_emisora, major, minor, tx_power, rssi)
-VALUES (@uuidEjemplo, @nombreEjemplo, @majorEjemplo, @minorEjemplo, @txPowerEjemplo, -61);
+INSERT INTO mediciones (nombre_emisora, tipo_medicion, valor_medicion)
+VALUES (@nombreEjemplo, @tipoEjemplo, @valorEjemplo);
 
-INSERT INTO mediciones (uuid_beacon, nombre_emisora, major, minor, tx_power, rssi)
-VALUES (@uuidEjemplo, @nombreEjemplo, @majorEjemplo, @minorEjemplo, @txPowerEjemplo, -48);
+INSERT INTO mediciones (nombre_emisora, tipo_medicion, valor_medicion)
+VALUES (@nombreEjemplo, @tipoEjemplo, @valorEjemplo);

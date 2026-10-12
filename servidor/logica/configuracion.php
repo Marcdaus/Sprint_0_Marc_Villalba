@@ -1,4 +1,11 @@
 <?php
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: PHP
+// Curso: 3ºGTI
+// =====================================
+
 
 // ===========================================================================
 // configuracion.php  --  PROMPT 4 (logica de negocio)

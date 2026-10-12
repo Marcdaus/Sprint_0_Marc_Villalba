@@ -1,4 +1,10 @@
-// -*- mode: c++ -*-
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: C++ (Arduino)
+// Curso: 3ºGTI
+// =====================================
+
 
 #ifndef MEDIDOR_H_INCLUIDO
 #define MEDIDOR_H_INCLUIDO

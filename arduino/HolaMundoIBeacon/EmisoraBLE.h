@@ -1,9 +1,10 @@
-// -*- mode: c++ -*-
-
-// ----------------------------------------------------------
-// Jordi Bataller i Mascarell
-// 2019-07-07
-// ----------------------------------------------------------
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: C++ (Arduino)
+// Curso: 3ºGTI
+// =====================================
+//si no está definido lo define
 #ifndef EMISORA_H_INCLUIDO
 #define EMISORA_H_INCLUIDO
 
@@ -16,12 +17,10 @@
 // https://os.mbed.com/blog/entry/BLE-Beacons-URIBeacon-AltBeacons-iBeacon/
 // https://learn.adafruit.com/bluefruit-nrf52-feather-learning-guide/bleadvertising
 
-// ----------------------------------------------------------
-// ----------------------------------------------------------
+// ====== Icluir Clases adcionales =====
 #include "ServicioEnEmisora.h"
+// =====================================
 
-// ----------------------------------------------------------
-// ----------------------------------------------------------
 class EmisoraBLE {
 private:
 
@@ -37,66 +36,30 @@ public:
   using CallbackConexionTerminada = void ( uint16_t connHandle, uint8_t reason);
 
   // .........................................................
-  // .........................................................
-  EmisoraBLE( const char * nombreEmisora_, const uint16_t fabricanteID_,
-			  const int8_t txPower_ ) 
-	:
-	nombreEmisora( nombreEmisora_ ) ,
-	fabricanteID( fabricanteID_ ) ,
-	txPower( txPower_ )
+  // ====== constructor =====
+  EmisoraBLE( const char * nombreEmisora_, const uint16_t fabricanteID_,const int8_t txPower_ ) : nombreEmisora( nombreEmisora_ ) ,fabricanteID( fabricanteID_ ) ,txPower( txPower_ )
   {
-	// no encender ahora la emisora, tal vez sea por el println()
-	// que hace que todo falle si lo llamo en el contructor
-	// ( = antes que configuremos Serial )
-	// No parece que sea por el println,
-	// por tanto NO_encenderEmisora();
-  } // ()
-
-  // .........................................................
-  // .........................................................
-  /* creo que no me sirve esta versión porque parece
-	 que no se instalen los callbacks si la emisora no está encendida,
-	 pero no la puedo encender en el constructor 
-  EmisoraBLE( const char * nombreEmisora_, const uint16_t fabricanteID_,
-			  const int8_t txPower_,
-			  CallbackConexionEstablecida cbce,
-			  CallbackConexionTerminada cbct
-			  ) 
-	:
-	EmisoraBLE ( nombreEmisora_, fabricanteID_, txPower_ )
-  {
-	instalarCallbackConexionEstablecida( cbce );
-	instalarCallbackConexionTerminada( cbct );
-  } // ()
-  */
-	
-  // .........................................................
-  // .........................................................
-  // Enciende la radio y deja el nombre y el txPower configurados UNA SOLA VEZ.
-  //
-  // OJO (esto era un bug): antes, setName() y ScanResponse.addName() estaban en
-  // emitirAnuncioIBeacon(), o sea, en CADA beacon. ScanResponse es un pool de
-  // datos con memoria limitada y hay que vaciarlo con clearData() antes de
-  // volver a llenarlo. Como no se vaciaba, cada emisson gastaba un poco de ese
-  // pool: a los pocos beacon se agotaba, Advertising.start() dejava de arrancar
-  // y la placa se quedaba en silencio. Ahora se hace aqui, una unica vez.
-  // .........................................................
+		//cuerpo constructor
+  } 
+// =====================================
+	//función que arranca y configura la radio BLE una sola vez (la llama setup(),
+	// a través de elPublicador.encenderEmisora()).
+	// .........................................................
+  // --> encenderEmisora() -->
   // .........................................................
   void encenderEmisora() {
-	 Bluefruit.begin();
+	 Bluefruit.begin(); //Arranca la pila BLE de la placa 
 
-	 // esto va una sola vez: son ajustes del GAP, no del anuncio
-	 Bluefruit.setTxPower( (*this).txPower );
-	 Bluefruit.setName( (*this).nombreEmisora );
+	 Bluefruit.setTxPower( (*this).txPower ); //Fija la potencia de emisión de la radio (dBm). Más potencia = más alcance
+	 Bluefruit.setName( (*this).nombreEmisora );//Fija el nombre GAP del dispositivo Aquí "GTI-3A-Marc"
 
-	 Bluefruit.ScanResponse.clearData();
-	 Bluefruit.ScanResponse.addName(); // para que envie el nombre de emisora
+	 Bluefruit.ScanResponse.clearData();// Vacía el contenido del scan response.
+	 Bluefruit.ScanResponse.addName(); // Añade el nombre del dispositivo 
 
-	 // por si acaso:
+	 // Llama a detenerAnuncio(), que mira estaAnunciando() y, si había un anuncio activo,
 	 (*this).detenerAnuncio();
-  } // ()
+  } // encenderEmisora()
 
-  // .........................................................
   // .........................................................
   void encenderEmisora( CallbackConexionEstablecida cbce,
 						CallbackConexionTerminada cbct ) {
@@ -109,6 +72,7 @@ public:
   } // ()
 
   // .........................................................
+  // --> detenerAnuncio() -->
   // .........................................................
   void detenerAnuncio() {
 
@@ -132,64 +96,38 @@ public:
   // (ver el aviso de arriba sobre la fuga de memoria del pool de ScanResponse).
   // Devuelve true si el anuncio ha arrancado de verdad, para poder avisar.
   // .........................................................
-  // .........................................................
   bool emitirAnuncioIBeacon( uint8_t * beaconUUID, int16_t major, int16_t minor, uint8_t rssi ) {
 
 	//
-	//
-	//
 	(*this).detenerAnuncio();
 
-	//
-	// creo el beacon
-	//
+	//crear beacon
 	BLEBeacon elBeacon( beaconUUID, major, minor, rssi );
 	elBeacon.setManufacturer( (*this).fabricanteID );
 
-	//
-	// limpio el pool de datos del anuncio antes de meter los nuevos
-	//
+	// limpiar el pool de datos del anuncio antes de meter los nuevos
 	Bluefruit.Advertising.clearData();
 
-	//
-	// pongo el beacon
-	//
+	// poner el beacon
 	Bluefruit.Advertising.setBeacon( elBeacon );
 
-	//
-	// ?
-	//
+	//le dice a la radio: cuando se caiga una conexión, vuelve a anunciar solo.
 	Bluefruit.Advertising.restartOnDisconnect(true);
 
-	// intervalo entre anuncios, en unidades de 0,625 ms.
-	//
-	// OJO, esto es importante. El beacon tiene que verse una vez por segundo, pero
-	// NO hay que poner el intervalo del hardware a 1000 ms. Motivo: el micro esta
-	// ocupado (el "publicarValor()" tiene un esperar()/delay()), y la radio del
-	// nRF52 anuncia desde el propio hardware, pero si el intervalo coincide con el
-	// final de la ventana, el unico evento de anuncio cae justo en el momento en que
-	// el programa para el anuncio y se pierde. Con la ventana a 1 s y announces cada
-	// 100 unidades (100 * 0,625 = 62,5 ms) hay unos 16 anuncios por segundo dentro de
-	// la ventana: aunque el micro este bloqueado, alguno sale. Es lo que hacen los
-	// emisores reales de beacons.
+	//intervalo entre anuncios, en unidades de 0,625 ms.
 	Bluefruit.Advertising.setInterval(100, 100);
 
-	//
-	// empieza el anuncio, 0 = tiempo indefinido (ya lo pararán)
-	//
-	// OJO: start() devuelve false si no ha podido arrancar (por ejemplo si se ha
-	// agotado alguna memoria). Antes se ignoraba ese valor y por eso no se veía
-	// ningún error cuando la placa se callaba.
-	//
+	//empieza el anuncio, 0 = tiempo indefinido (ya lo pararán)
 	bool r = Bluefruit.Advertising.start( 0 );
 
+	//si hak algun error en el puerto devuelve el error.
 	if ( ! r ) {
 		Globales::elPuerto.escribir( " ERROR: Advertising.start() ha fallado: no se anuncia\n" );
 	}
 
 	return r;
 
-  } // ()
+  } // emitirAnuncioIBeacon ()
 
   // .........................................................
   //
@@ -369,12 +307,9 @@ public:
 	return Bluefruit.Connection( connHandle );
   } // ()
 
-}; // class
+}; // class EmisoraBLE
 
 #endif
 
-// ----------------------------------------------------------
-// ----------------------------------------------------------
-// ----------------------------------------------------------
 // ----------------------------------------------------------
 

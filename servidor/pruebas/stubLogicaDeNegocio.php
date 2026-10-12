@@ -1,4 +1,11 @@
 <?php
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: PHP
+// Curso: 3ºGTI
+// =====================================
+
 
 // ===========================================================================
 // stubLogicaDeNegocio.php  --  STUB TEMPORAL, es de las PRUEBAS
@@ -17,8 +24,8 @@
 //   - guardarMedicion()   : NO guarda nada. Solo responde 200 con un id.
 //   - recuperarMedicion() : NO consulta nada. Devuelve mediciones fijas.
 //
-// NO VALIDA NADA: no comprueba si el beacon es conocido, ni si el minor
-// esta, ni nada de eso. Todo eso es de la logica de verdad (PROMPT 4).
+// NO VALIDA NADA: no comprueba si el tipo de medicion es conocido, ni si el
+// valor esta, ni nada de eso. Todo eso es de la logica de verdad (PROMPT 4).
 // Este stub solo sirve para comprobar que los endpoints leen, parsean y
 // delegan bien.
 //
@@ -36,22 +43,16 @@ const STUB_ID_GUARDADO = 42;
 const STUB_MEDICIONES = [
   [
     'id'             => 1,
-    'uuid_beacon'    => 'EPSG-GTI-MARC-3A',
     'nombre_emisora' => 'GTI-3A',
-    'major'          => 3584,
-    'minor'          => 1234,
-    'tx_power'       => 4,
-    'rssi'           => -53,
+    'tipo_medicion'  => 'prueba',
+    'valor_medicion' => 1234,
     'fecha'          => '2026-09-29 19:00:00'
   ],
   [
     'id'             => 2,
-    'uuid_beacon'    => 'EPSG-GTI-MARC-3A',
     'nombre_emisora' => 'GTI-3A',
-    'major'          => 3585,
-    'minor'          => 1234,
-    'tx_power'       => 4,
-    'rssi'           => -60,
+    'tipo_medicion'  => 'CO2',
+    'valor_medicion' => 235,
     'fecha'          => '2026-09-29 19:00:01'
   ]
 ];

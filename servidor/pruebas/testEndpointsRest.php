@@ -1,4 +1,11 @@
 <?php
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: PHP
+// Curso: 3ºGTI
+// =====================================
+
 
 // ===========================================================================
 // testEndpointsRest.php  --  PRUEBAS (PROMPT 3)
@@ -70,8 +77,8 @@ const RUTA_GUARDAR   = '/servidor/rest/guardarMedicion.php';
 const RUTA_RECUPERAR = '/servidor/rest/recuperarMedicion.php';
 
 // El JSON que manda la app Android de verdad (el del prompt).
-const JSON_MEDICION = '{"uuid_beacon":"EPSG-GTI-MARC-3A","nombre_emisora":"GTI-3A",'
-                     . '"major":3584,"minor":1234,"tx_power":4,"rssi":-53}';
+const JSON_MEDICION = '{"nombre_emisora":"GTI-3A","tipo_medicion":"prueba",'
+                     . '"valor_medicion":1234}';
 
 // ===========================================================================
 // PEQUENA BIBLIOTECA DE PRUEBAS
@@ -237,14 +244,14 @@ comprobar( isset( $json['mediciones'] ) && is_array( $json['mediciones'] ),
 comprobar( count( $json['mediciones'] ?? [] ) > 0,
            'la lista de mediciones no viene vacia (el stub devuelve dos)' );
 
-// la primera medicion del stub, con el uuid del proyecto
+// la primera medicion del stub, con el tipo y el valor del proyecto
 $primera = $json['mediciones'][0] ?? null;
 
-comprobar( $primera !== null && $primera['uuid_beacon'] === 'EPSG-GTI-MARC-3A',
-           'la medicion trae el uuid del proyecto, EPSG-GTI-MARC-3A' );
+comprobar( $primera !== null && $primera['tipo_medicion'] === 'prueba',
+           'la medicion trae el tipo de medicion "prueba"' );
 
-comprobar( $primera !== null && $primera['minor'] === 1234,
-           'la medicion trae el minor 1234' );
+comprobar( $primera !== null && $primera['valor_medicion'] === 1234,
+           'la medicion trae el valor 1234' );
 
 // ===========================================================================
 // PRUEBA 5: GET recuperarMedicion con filtros -> 200
@@ -255,7 +262,7 @@ comprobar( $primera !== null && $primera['minor'] === 1234,
 // reescribir para comprobar que el filtro se aplica de verdad.
 // ===========================================================================
 
-$r = peticion( 'GET', RUTA_RECUPERAR . '?desde=2026-09-01&minor=1234' );
+$r = peticion( 'GET', RUTA_RECUPERAR . '?desde=2026-09-01&valor_medicion=1234' );
 
 comprobar( $r->codigo === 200,
            "GET recuperarMedicion con filtros -> 200 (llega " . $r->codigo . ")" );
@@ -265,7 +272,7 @@ $json = json_decode( $r->cuerpo, true );
 comprobar( isset( $json['mediciones'] ),
            'con filtros, la respuesta sigue traer "mediciones"' );
 
-$r = peticion( 'GET', RUTA_RECUPERAR . '?uuid_beacon=EPSG-GTI-MARC-3A&desde=a&hasta=b' );
+$r = peticion( 'GET', RUTA_RECUPERAR . '?tipo_medicion=prueba&desde=a&hasta=b' );
 
 comprobar( $r->codigo === 200,
            "GET recuperarMedicion con los cuatro filtros -> 200 (llega " . $r->codigo . ")" );
@@ -292,12 +299,10 @@ printf( "\n-----------------------------------------------------\n" );
 printf( " %d pruebas, %d fallos\n", $GLOBALS['pruebas'], $GLOBALS['fallos'] );
 printf( "-----------------------------------------------------\n" );
 
-// OJO: con el PROMPT 4 puesto, la logica de verdad validara el beacon y el
-// minor, y estas pruebas dejaran de servir tal cual: habra que cambiarlas
-// por las de la logica de verdad.
-printf( "\n AVISO: estas pruebas usan el STUB. Con el PROMPT 4 puesto, la\n" );
-printf( "        logica de verdad validara los datos y estas pruebas\n" );
-printf( "        tendran que reescribirse.\n" );
+// OJO: con el PROMPT 4 puesto, la logica de verdad validara el tipo y el
+// valor, y estas pruebas usan la BD de verdad (necesitan MySQL encendido).
+printf( "\n AVISO: estas pruebas usan la logica de verdad. Necesitan MySQL\n" );
+printf( "        encendido y la base de datos proyecto_beacon (PROMPT 5).\n" );
 
 exit( $GLOBALS['fallos'] === 0 ? 0 : 1 );
 

@@ -1,3 +1,10 @@
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: JavaScript
+// Curso: 3ºGTI
+// =====================================
+
 // ---------------------------------------------------
 //
 // Monta la direccion completa del PHP que hay que llamar.

@@ -1,4 +1,11 @@
 <?php
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: PHP
+// Curso: 3ºGTI
+// =====================================
+
 
 // ===========================================================================
 // testAuxiliaresRest.php  --  PRUEBAS (PROMPT 3)
@@ -69,95 +76,62 @@ function comprobar( $condicion, $texto ) {
 
 } // ()
 
-// ------------------------------------------------------------------
-// limpiarMedicion() : vacia una Medicion para poder compararla
-// ------------------------------------------------------------------
-// m: Medicion --> limpiarMedicion() --> Medicion
-function limpiarMedicion( $m ) {
-
-  $vacia = new stdClass();
-  $vacia->uuid_beacon    = null;
-  $vacia->nombre_emisora = null;
-  $vacia->major          = null;
-  $vacia->minor          = null;
-  $vacia->tx_power       = null;
-  $vacia->rssi           = null;
-
-  if ( $m == $vacia ) {
-    return $vacia;
-  }
-
-  return $m;
-
-} // ()
-
 // ===========================================================================
 // PRUEBA 1: parsearJSON() con el JSON de verdad de la app
 // ===========================================================================
 
-$jsonBueno = '{"uuid_beacon":"EPSG-GTI-MARC-3A","nombre_emisora":"GTI-3A",'
-           . '"major":3584,"minor":1234,"tx_power":4,"rssi":-53}';
+$jsonBueno = '{"nombre_emisora":"GTI-3A","tipo_medicion":"prueba","valor_medicion":1234}';
 
 $m = parsearJSON( $jsonBueno );
-
-comprobar( $m->uuid_beacon === 'EPSG-GTI-MARC-3A',
-           "parsearJSON(): el uuid es EPSG-GTI-MARC-3A" );
 
 comprobar( $m->nombre_emisora === 'GTI-3A',
            "parsearJSON(): el nombre_emisora es GTI-3A" );
 
-comprobar( $m->major === 3584,
-           "parsearJSON(): el major es 3584" );
+comprobar( $m->tipo_medicion === 'prueba',
+           "parsearJSON(): el tipo_medicion es prueba" );
 
-comprobar( $m->minor === 1234,
-           "parsearJSON(): el minor es 1234 (el valor del proyecto)" );
+comprobar( $m->valor_medicion === 1234,
+           "parsearJSON(): el valor_medicion es 1234" );
 
-comprobar( $m->tx_power === 4,
-           "parsearJSON(): el tx_power es 4" );
-
-// el rssi es NEGATIVO: -53, no 53. Un fallo tipico aqui seria perder el signo
-comprobar( $m->rssi === -53,
-           "parsearJSON(): el rssi es -53 (con su signo negativo)" );
-
-// los numeros tienen que salir como numero, no como texto
-comprobar( is_int( $m->minor ),
-           "parsearJSON(): el minor sale como numero, no como texto" );
+// el numero tiene que salir como numero, no como texto
+comprobar( is_int( $m->valor_medicion ),
+           "parsearJSON(): el valor_medicion sale como numero, no como texto" );
 
 // ===========================================================================
-// PRUEBA 2: parsearJSON() con JSON malformado
+// PRUEBA 2: parsearJSON() con JSON malformado -> null (-> 400)
 // ===========================================================================
 
 // el caso que de verdad tiene que dar 400
 $vacia = parsearJSON( '{ esto no es json ' );
 
-comprobar( limpiarMedicion( $vacia )->uuid_beacon === null,
-           "parsearJSON(): con JSON malformado devuelve la Medicion vacia (-> 400)" );
+comprobar( $vacia === null,
+           "parsearJSON(): con JSON malformado devuelve null (-> 400)" );
 
 // JSON vacio
 $vacia = parsearJSON( '' );
 
-comprobar( limpiarMedicion( $vacia )->uuid_beacon === null,
-           "parsearJSON(): con el cuerpo vacio devuelve la Medicion vacia" );
+comprobar( $vacia === null,
+           "parsearJSON(): con el cuerpo vacio devuelve null" );
 
 // un JSON que vale pero no es un objeto de Medicion
 $vacia = parsearJSON( '"solo soy un texto"' );
 
-comprobar( limpiarMedicion( $vacia )->uuid_beacon === null,
-           "parsearJSON(): con un JSON que no es objeto devuelve la vacia" );
+comprobar( $vacia === null,
+           "parsearJSON(): con un JSON que no es objeto devuelve null" );
 
 // un JSON con solo algunos campos: los que falten quedan en null
-$m = parsearJSON( '{"uuid_beacon":"EPSG-GTI-MARC-3A","minor":1234}' );
+$m = parsearJSON( '{"nombre_emisora":"GTI-3A","valor_medicion":1234}' );
 
-comprobar( $m->uuid_beacon === 'EPSG-GTI-MARC-3A' && $m->minor === 1234,
+comprobar( $m->nombre_emisora === 'GTI-3A' && $m->valor_medicion === 1234,
            "parsearJSON(): con campos sueltos lee los que hay" );
 
-comprobar( $m->rssi === null,
+comprobar( $m->tipo_medicion === null,
            "parsearJSON(): los campos que no llegan se quedan en null (no en 0)" );
 
 // los numeros que llegan como texto se convierten a numero
-$m = parsearJSON( '{"uuid_beacon":"EPSG-GTI-MARC-3A","minor":"1234","rssi":"-53"}' );
+$m = parsearJSON( '{"tipo_medicion":"prueba","valor_medicion":"1234"}' );
 
-comprobar( $m->minor === 1234 && $m->rssi === -53,
+comprobar( $m->valor_medicion === 1234,
            "parsearJSON(): si el numero llega como texto, tambien lo convierte" );
 
 // ===========================================================================
@@ -165,52 +139,52 @@ comprobar( $m->minor === 1234 && $m->rssi === -53,
 // ===========================================================================
 
 // ---- con filtros ----
-$query = [ 'desde' => '2026-09-29', 'minor' => '1234' ];
+$query = [ 'desde' => '2026-09-29', 'tipo_medicion' => 'prueba' ];
 
 $f = extraerFiltros( $query );
 
 comprobar( $f->desde === '2026-09-29',
            "extraerFiltros(): el filtro 'desde' se lee" );
 
-comprobar( $f->minor === '1234',
-           "extraerFiltros(): el filtro 'minor' se lee" );
+comprobar( $f->tipo_medicion === 'prueba',
+           "extraerFiltros(): el filtro 'tipo_medicion' se lee" );
 
 // los que no vienen se quedan en null = sin filtro
 comprobar( $f->hasta === null,
            "extraerFiltros(): 'hasta' no venia, queda en null (sin filtro)" );
 
-comprobar( $f->uuid_beacon === null,
-           "extraerFiltros(): 'uuid_beacon' no venia, queda en null" );
+comprobar( $f->valor_medicion === null,
+           "extraerFiltros(): 'valor_medicion' no venia, queda en null" );
 
 // ---- con los cuatro filtros ----
 $query = [ 'desde' => '2026-09-01', 'hasta' => '2026-09-30',
-           'uuid_beacon' => 'EPSG-GTI-MARC-3A', 'minor' => '1234' ];
+           'tipo_medicion' => 'prueba', 'valor_medicion' => '1234' ];
 
 $f = extraerFiltros( $query );
 
 comprobar( $f->desde === '2026-09-01' && $f->hasta === '2026-09-30',
            "extraerFiltros(): con los cuatro filtros, todos se leen" );
 
-comprobar( $f->uuid_beacon === 'EPSG-GTI-MARC-3A' && $f->minor === '1234',
-           "extraerFiltros(): con los cuatro filtros, uuid y minor tambien" );
+comprobar( $f->tipo_medicion === 'prueba' && $f->valor_medicion === '1234',
+           "extraerFiltros(): con los cuatro filtros, tipo y valor tambien" );
 
 // ---- sin query: todo en null ----
 $f = extraerFiltros( [] );
 
 comprobar( $f->desde === null && $f->hasta === null
-           && $f->uuid_beacon === null && $f->minor === null,
+           && $f->tipo_medicion === null && $f->valor_medicion === null,
            "extraerFiltros(): sin query, los cuatro filtros quedan en null" );
 
 // ---- un filtro que viene pero vacio no cuenta como filtro ----
-$f = extraerFiltros( [ 'minor' => '' ] );
+$f = extraerFiltros( [ 'valor_medicion' => '' ] );
 
-comprobar( $f->minor === null,
-           "extraerFiltros(): un filtro vacio (?minor=) es null, no un filtro" );
+comprobar( $f->valor_medicion === null,
+           "extraerFiltros(): un filtro vacio (?valor_medicion=) es null, no un filtro" );
 
 // ---- un filtro que no existe se ignora, no peta ----
 $f = extraerFiltros( [ 'noExiste' => 'lo que sea' ] );
 
-comprobar( $f->minor === null,
+comprobar( $f->valor_medicion === null,
            "extraerFiltros(): un parametro desconocido se ignora" );
 
 // ===========================================================================

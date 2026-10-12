@@ -1,3 +1,10 @@
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: JavaScript
+// Curso: 3ºGTI
+// =====================================
+
 // ===========================================================================
 // PRUEBAS DE LA LOGICA FAKE DE LA WEB   (PROMPT 6)
 //
@@ -10,7 +17,7 @@
 //     cd web\pruebas
 //     node pruebasLogicaFake.js
 //
-// Si todo va bien sale "20 pruebas, 0 fallos" y el codigo de salida es 0.
+// Si todo va bien sale "33 pruebas, 0 fallos" y el codigo de salida es 0.
 // Si algo falla, el codigo de salida es 1.
 //
 // ===========================================================================
@@ -151,12 +158,9 @@ function consultar( preparar ) {
 function medicionDelServidor() {
 	return {
 		id: 1,
-		uuid_beacon: "EPSG-GTI-MARC-3A",
 		nombre_emisora: "GTI-3A",
-		major: 3584,
-		minor: 1234,
-		tx_power: 4,
-		rssi: -53,
+		tipo_medicion: "prueba",
+		valor_medicion: 1234,
 		fecha: "2026-09-26 12:34:05"
 	};
 }
@@ -182,19 +186,16 @@ console.log( "adaptarMediciones" );
 const adaptada = logica.adaptarMediciones( [ medicionDelServidor() ] );
 
 comprobarIgual( Object.keys( adaptada[0] ).sort(),
-	[ "fecha", "id", "major", "minor", "nombre", "rssi", "txPower", "uuid" ],
-	"los campos del servidor se renombran (uuid_beacon -> uuid, tx_power -> txPower)"
+	[ "fecha", "id", "nombre", "tipo", "valor" ],
+	"los campos del servidor se renombran (nombre_emisora -> nombre, tipo_medicion -> tipo, valor_medicion -> valor)"
 );
 
-comprobar( adaptada[0].uuid === "EPSG-GTI-MARC-3A", "el uuid se copia" );
 comprobar( adaptada[0].nombre === "GTI-3A", "el nombre de la emisora se copia" );
 comprobar( adaptada[0].id === 1, "el id se copia" );
+comprobar( adaptada[0].tipo === "prueba", "el tipo de medicion se copia" );
 
-comprobarIgual(
-	[ adaptada[0].minor, adaptada[0].major, adaptada[0].txPower, adaptada[0].rssi ],
-	[ 1234, 3584, 4, -53 ],
-	"minor, major, txPower y rssi conservan su valor (rssi sigue siendo -53)"
-);
+comprobar( adaptada[0].valor === 1234,
+	"el valor de la medicion conserva su numero (1234)" );
 
 comprobar( adaptada[0].fecha === "2026-09-26 12:34:05",
 	"la fecha se deja en el texto del servidor, sin formatear" );
@@ -203,8 +204,8 @@ comprobarIgual( logica.adaptarMediciones( [] ), [], "una lista vacia devuelve un
 
 comprobarIgual( logica.adaptarMediciones( null ), [], "si no llega una lista, devuelve una vacia" );
 
-comprobar( logica.adaptarMediciones( [ { minor: 0, rssi: 0 } ] )[0].rssi === 0,
-	"un rssi de 0 no se pierde (por eso no se usa \"||\")" );
+comprobar( logica.adaptarMediciones( [ { valor_medicion: 0 } ] )[0].valor === 0,
+	"un valor de 0 no se pierde (por eso no se usa \"||\")" );
 
 console.log( "" );
 console.log( "formatearFecha" );
@@ -318,13 +319,14 @@ process.exitCode = ( fallos === 0 ) ? 0 : 1;
 //     cd "C:\Users\MarcV\Desktop\otra vez\Sprint_0_Marc_Villalba\web\pruebas"
 //     node pruebasLogicaFake.js
 //
-// Resultado esperado: 20 pruebas, 0 fallos. TODO CORRECTO.
+// Resultado esperado: 33 pruebas, 0 fallos. TODO CORRECTO.
 //
 // Que se prueba y como:
 //
 //   construirURL       junta host + puerto + ruta. Sin red.
 //   adaptarMediciones  renombra los campos y conserva los valores
-//                      (minor 1234, rssi -53, la fecha en texto).
+//                      (nombre_emisora -> nombre, tipo_medicion -> tipo,
+//                      valor_medicion -> valor; la fecha en texto).
 //   formatearFecha     "2026-09-26 12:34:05" -> "26/09/2026 12:34".
 //   consultarMediciones XHR simulado, con 4 respuestas distintas:
 //                      200 con lista, 500 con mensaje, 405, y la red
@@ -332,8 +334,8 @@ process.exitCode = ( fallos === 0 ) ? 0 : 1;
 //
 // Que NO se prueba (es del PROMPT 7, aqui no hay nada que mirar):
 //
-//   que se pinte la tabla, la cabecera "Ultima medida registrada", el
-//   separador "medidas anteriores" ni el sufijo " ppm" de la columna
-//   Medicion. Esta logica no sabe nada del DOM.
+//   que se pinte la tabla con sus columnas id, Tipo, Valor, nombre_emisora
+//   y Fecha y Hora, ni la cabecera "Ultima medida registrada" ni el
+//   separador "medidas anteriores". Esta logica no sabe nada del DOM.
 //
 // ===========================================================================

@@ -1,4 +1,11 @@
 <?php
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: PHP
+// Curso: 3ºGTI
+// =====================================
+
 
 // ===========================================================================
 // testLogicaDeNegocio.php  --  PRUEBAS (PROMPT 4)
@@ -175,12 +182,9 @@ function ponerPDOFalso() {
 function medicionDePrueba( $campo = null, $valor = null ) {
 
   $m = new stdClass();
-  $m->uuid_beacon    = 'EPSG-GTI-MARC-3A';
   $m->nombre_emisora = 'GTI-3A';
-  $m->major          = 3584;
-  $m->minor          = 1234;
-  $m->tx_power       = 4;
-  $m->rssi           = -53;
+  $m->tipo_medicion  = 'prueba';
+  $m->valor_medicion = 1234;
 
   if ( $campo !== null ) {
     $m->$campo = $valor;
@@ -193,14 +197,14 @@ function medicionDePrueba( $campo = null, $valor = null ) {
 // ---------------------------------------------------------------------------
 // filtroDePrueba() : un FiltroMediciones vacio (todos los filtros opcionales)
 // ---------------------------------------------------------------------------
-// desde: Text?, hasta: Text?, uuid_beacon: Text?, minor: Z? --> filtroDePrueba() --> FiltroMediciones
-function filtroDePrueba( $desde = null, $hasta = null, $uuid = null, $minor = null ) {
+// desde: Text?, hasta: Text?, tipo_medicion: Text?, valor_medicion: Z? --> filtroDePrueba() --> FiltroMediciones
+function filtroDePrueba( $desde = null, $hasta = null, $tipo = null, $valor = null ) {
 
   $f = new stdClass();
-  $f->desde       = $desde;
-  $f->hasta       = $hasta;
-  $f->uuid_beacon = $uuid;
-  $f->minor       = $minor;
+  $f->desde          = $desde;
+  $f->hasta          = $hasta;
+  $f->tipo_medicion  = $tipo;
+  $f->valor_medicion = $valor;
 
   return $f;
 
@@ -216,16 +220,16 @@ function cuerpoDecodificado( $respuesta ) {
 
 
 // ===========================================================================
-// RN1: la uuid tiene que ser la conocida
+// RN1: el tipo tiene que ser uno de los conocidos
 // ===========================================================================
 
-titulo( 'RN1: la uuid_beacon tiene que ser la conocida' );
+titulo( 'RN1: el tipo_medicion tiene que ser uno de los conocidos' );
 
 $falso = ponerPDOFalso();
 
-$r = guardarMedicion( medicionDePrueba( 'uuid_beacon', 'EPSG-GTI-OTRO-3A' ) );
+$r = guardarMedicion( medicionDePrueba( 'tipo_medicion', 'humedad' ) );
 
-comprobar( $r->codigo === 400, 'una uuid desconocida -> 400' );
+comprobar( $r->codigo === 400, 'un tipo desconocido -> 400' );
 
 $json = cuerpoDecodificado( $r );
 comprobar( isset( $json['error'] ), 'el 400 trae un campo "error"' );
@@ -236,70 +240,74 @@ comprobar( $falso->numeroDeSentencias() === 0,
 comprobar( $falso->ejecuciones === 0,
            'NO se ejecuta nada contra la base de datos' );
 
-// el nombre del error tiene que decir que la uuid no la reconoce
-comprobar( strpos( (string) ( $json['error'] ?? '' ), 'uuid' ) !== false,
-           'el motivo del error habla de la uuid' );
+// el nombre del error tiene que decir que el tipo no lo reconoce
+comprobar( strpos( (string) ( $json['error'] ?? '' ), 'tipo' ) !== false,
+           'el motivo del error habla del tipo' );
 
 
-titulo( 'RN1: con la uuid correcta si se guarda' );
+titulo( 'RN1: con un tipo conocido si se guarda' );
 
-$falso = ponerPDOFalso();
+foreach ( [ 'CO2', 'temperatura', 'prueba' ] as $tipoValido ) {
 
-$r = guardarMedicion( medicionDePrueba() );
+  $falso = ponerPDOFalso();
 
-comprobar( $r->codigo === 200, 'con la uuid buena -> 200' );
+  $r = guardarMedicion( medicionDePrueba( 'tipo_medicion', $tipoValido ) );
 
-comprobar( $falso->inserts === 1, 'se inserta exactamente una fila' );
+  comprobar( $r->codigo === 200, 'el tipo "' . $tipoValido . '" es valido -> 200' );
+
+  comprobar( $falso->inserts === 1, 'se inserta exactamente una fila' );
+
+}
 
 
 // ===========================================================================
-// RN2: el minor es obligatorio y entero
+// RN2: el valor_medicion es obligatorio y entero
 // ===========================================================================
 
-titulo( 'RN2: el minor es obligatorio' );
+titulo( 'RN2: el valor_medicion es obligatorio' );
 
 $falso = ponerPDOFalso();
 
-$r = guardarMedicion( medicionDePrueba( 'minor', null ) );
+$r = guardarMedicion( medicionDePrueba( 'valor_medicion', null ) );
 
-comprobar( $r->codigo === 400, 'sin minor -> 400' );
+comprobar( $r->codigo === 400, 'sin valor_medicion -> 400' );
 
 comprobar( $falso->numeroDeSentencias() === 0,
-           'sin minor NO se inserta nada' );
+           'sin valor_medicion NO se inserta nada' );
 
 $json = cuerpoDecodificado( $r );
-comprobar( strpos( (string) ( $json['error'] ?? '' ), 'minor' ) !== false,
-           'el motivo del error habla del minor' );
+comprobar( strpos( (string) ( $json['error'] ?? '' ), 'valor' ) !== false,
+           'el motivo del error habla del valor' );
 
 
-titulo( 'RN2: el minor tiene que ser un entero, no texto' );
+titulo( 'RN2: el valor_medicion tiene que ser un entero, no texto' );
 
 $falso = ponerPDOFalso();
 
-$r = guardarMedicion( medicionDePrueba( 'minor', '1234' ) );
+$r = guardarMedicion( medicionDePrueba( 'valor_medicion', '1234' ) );
 
-comprobar( $r->codigo === 400, 'un minor de texto -> 400' );
+comprobar( $r->codigo === 400, 'un valor_medicion de texto -> 400' );
 
 comprobar( $falso->numeroDeSentencias() === 0,
-           'un minor de texto NO se inserta' );
+           'un valor_medicion de texto NO se inserta' );
 
 
-titulo( 'RN2: el minor NO se valida contra un valor fijo' );
+titulo( 'RN2: el valor_medicion NO se valida contra un valor fijo' );
 
 // aqui esta el fondo de la regla: hoy vale 1234, pero el valor es del
 // proyecto y se puede cambiar para la demo, asi que CUALQUIER entero vale
 
 $falso = ponerPDOFalso();
-$r = guardarMedicion( medicionDePrueba( 'minor', 999 ) );
-comprobar( $r->codigo === 200, 'un minor 999 (distinto de 1234) -> 200' );
+$r = guardarMedicion( medicionDePrueba( 'valor_medicion', 999 ) );
+comprobar( $r->codigo === 200, 'un valor_medicion 999 (distinto de 1234) -> 200' );
 
 $falso = ponerPDOFalso();
-$r = guardarMedicion( medicionDePrueba( 'minor', 0 ) );
-comprobar( $r->codigo === 200, 'un minor 0 -> 200' );
+$r = guardarMedicion( medicionDePrueba( 'valor_medicion', 0 ) );
+comprobar( $r->codigo === 200, 'un valor_medicion 0 -> 200' );
 
 $falso = ponerPDOFalso();
-$r = guardarMedicion( medicionDePrueba( 'minor', -7 ) );
-comprobar( $r->codigo === 200, 'un minor negativo -> 200' );
+$r = guardarMedicion( medicionDePrueba( 'valor_medicion', -7 ) );
+comprobar( $r->codigo === 200, 'un valor_medicion negativo -> 200' );
 
 
 // ===========================================================================
@@ -316,8 +324,8 @@ $sql = $falso->ultimaSentencia()->sql;
 comprobar( stripos( $sql, 'fecha' ) === false,
            'el SQL del INSERT no menciona la palabra fecha en ninguna parte' );
 
-comprobar( substr_count( $sql, '?' ) === 6,
-           'el INSERT lleva 6 interrogantes, uno por cada columna' );
+comprobar( substr_count( $sql, '?' ) === 3,
+           'el INSERT lleva 3 interrogantes, uno por cada columna' );
 
 comprobar( stripos( $sql, 'INSERT INTO mediciones' ) === 0,
            'el INSERT es sobre la tabla mediciones' );
@@ -325,15 +333,15 @@ comprobar( stripos( $sql, 'INSERT INTO mediciones' ) === 0,
 comprobar( stripos( $sql, 'VALUES' ) !== false,
            'el INSERT usa VALUES' );
 
-// los seis valores van en el mismo orden que las seis columnas
-$esperados = [ 'EPSG-GTI-MARC-3A', 'GTI-3A', 3584, 1234, 4, -53 ];
+// los tres valores van en el mismo orden que las tres columnas
+$esperados = [ 'GTI-3A', 'prueba', 1234 ];
 $recibidos = $falso->ultimaSentencia()->parametros;
 
 comprobar( $recibidos === $esperados,
-           'los 6 parametros van en el orden de las columnas' );
+           'los 3 parametros van en el orden de las columnas' );
 
 // los valores NO van pegados dentro del SQL: van aparte (parametrizado)
-comprobar( strpos( $sql, 'EPSG-GTI-MARC-3A' ) === false
+comprobar( strpos( $sql, 'GTI-3A' ) === false
            && strpos( $sql, '1234' ) === false,
            'ningun valor esta pegado dentro del SQL (consulta parametrizada)' );
 
@@ -361,9 +369,8 @@ titulo( 'recuperarMedicion: sin filtros, se devuelven todas' );
 
 $falso = ponerPDOFalso();
 $falso->filas = [
-  [ 'id' => '1', 'uuid_beacon' => 'EPSG-GTI-MARC-3A', 'nombre_emisora' => 'GTI-3A',
-    'major' => '3584', 'minor' => '1234', 'tx_power' => '4', 'rssi' => '-53',
-    'fecha' => '2026-09-29 10:15:00' ]
+  [ 'id' => '1', 'nombre_emisora' => 'GTI-3A', 'tipo_medicion' => 'prueba',
+    'valor_medicion' => '1234', 'fecha' => '2026-09-29 10:15:00' ]
 ];
 
 $r = recuperarMedicion( filtroDePrueba() );
@@ -392,18 +399,18 @@ comprobar( count( $json['mediciones'] ) === 1, 'viene la fila que hay en la BD' 
 // los numeros del SELECT salen como numeros en el JSON, no como texto
 $medicion = $json['mediciones'][0];
 
-comprobar( $medicion['major'] === 3584 && is_int( $medicion['major'] ),
-           'el major sale como numero, no como texto' );
+comprobar( $medicion['valor_medicion'] === 1234 && is_int( $medicion['valor_medicion'] ),
+           'el valor_medicion sale como numero, no como texto' );
 
-comprobar( $medicion['rssi'] === -53 && is_int( $medicion['rssi'] ),
-           'el rssi sale como numero negativo' );
+comprobar( $medicion['tipo_medicion'] === 'prueba',
+           'el tipo_medicion sale como el texto que hay en la BD' );
 
 comprobar( $medicion['fecha'] === '2026-09-29 10:15:00',
            'la fecha viene de la BD, tal cual' );
 
-comprobar( isset( $medicion['uuid_beacon'] ) && isset( $medicion['nombre_emisora'] )
-           && isset( $medicion['tx_power'] ),
-           'la medicion trae los seis campos de la medicion mas la fecha' );
+comprobar( isset( $medicion['nombre_emisora'] ) && isset( $medicion['tipo_medicion'] )
+           && isset( $medicion['valor_medicion'] ),
+           'la medicion trae los tres campos de la medicion mas el id y la fecha' );
 
 comprobar( $medicion['id'] === 1 && is_int( $medicion['id'] ),
            'la medicion trae el id, que es lo que pinta la web en la primera columna' );
@@ -416,27 +423,27 @@ $r = recuperarMedicion( filtroDePrueba( null, null, null, 1234 ) );
 $sentencia = $falso->ultimaSentencia();
 
 comprobar( stripos( $sentencia->sql, 'WHERE' ) !== false,
-           'con filtro de minor, el SELECT lleva WHERE' );
+           'con filtro de valor_medicion, el SELECT lleva WHERE' );
 
-comprobar( strpos( $sentencia->sql, 'minor = ?' ) !== false,
-           'la condicion del WHERE es "minor = ?"' );
+comprobar( strpos( $sentencia->sql, 'valor_medicion = ?' ) !== false,
+           'la condicion del WHERE es "valor_medicion = ?"' );
 
-comprobar( stripos( $sentencia->sql, 'uuid_beacon = ?' ) === false,
-           'NO aparece un filtro de uuid que no se ha pedido' );
+comprobar( stripos( $sentencia->sql, 'tipo_medicion = ?' ) === false,
+           'NO aparece un filtro de tipo que no se ha pedido' );
 
 comprobar( stripos( $sentencia->sql, 'fecha >=' ) === false
            && stripos( $sentencia->sql, 'fecha <=' ) === false,
            'NO aparecen filtros de fecha si no se han pedido' );
 
 comprobar( $sentencia->parametros === array( 1234 ),
-           'solo se manda el valor del minor, y como numero' );
+           'solo se manda el valor del valor_medicion, y como numero' );
 
 
 titulo( 'recuperarMedicion: con los cuatro filtros, los cuatro' );
 
 $falso = ponerPDOFalso();
 $r = recuperarMedicion( filtroDePrueba( '2026-09-01', '2026-09-30',
-                                        'EPSG-GTI-MARC-3A', 1234 ) );
+                                        'prueba', 1234 ) );
 $sentencia = $falso->ultimaSentencia();
 
 comprobar( substr_count( $sentencia->sql, 'AND' ) === 3,
@@ -446,7 +453,7 @@ comprobar( substr_count( $sentencia->sql, '?' ) === 4,
            'las cuatro condiciones van parametrizadas' );
 
 $esperados = [ '2026-09-01 00:00:00', '2026-09-30 23:59:59',
-               'EPSG-GTI-MARC-3A', 1234 ];
+               'prueba', 1234 ];
 
 comprobar( $sentencia->parametros === $esperados,
            'los cuatro parametros van en orden, con el dia acotado' );
@@ -534,7 +541,7 @@ comprobar( $falso->ejecuciones === 0 && $GLOBALS['pdo'] === $falso,
 //
 // RESULTADO ESPERADO:
 //
-//      56 pruebas, 0 fallos
+//      60 pruebas, 0 fallos
 //
 // Y una linea mas al final con las pruebas que han pasado. Si sale
 // "1 fallos" o mas, el numero del fallo es el del principio de la seccion.

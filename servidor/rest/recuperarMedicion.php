@@ -1,4 +1,11 @@
 <?php
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: PHP
+// Curso: 3ºGTI
+// =====================================
+
 
 // ===========================================================================
 // recuperarMedicion.php
@@ -6,7 +13,7 @@
 //   Ruta REST : rest/recuperarMedicion.php
 //   Metodo    : GET   (cualquier otro metodo -> 405)
 //   Entrada   : filtros opcionales en el query (?desde=...&hasta=...
-//               &uuid_beacon=...&minor=...)
+//               &tipo_medicion=...&valor_medicion=...)
 //   Delega en : recuperarMedicion() de la logica de negocio (PROMPT 4)
 //
 // Que hace este endpoint, paso a paso (todo aqui mismo, es autocontenido):
@@ -30,7 +37,7 @@
 // ===========================================================================
 
 // ====== VARIABLES MODIFICABLES ======
-// Rutas del despliegue. El "minor" NO se fija aqui: es un filtro
+// Rutas del despliegue. El "valor_medicion" NO se fija aqui: es un filtro
 // opcional que llega en el query, y puede ser el que sea.
 // =====================================
 
@@ -49,17 +56,18 @@ if ( file_exists( $rutaLogicaNegocio ) ) {
 // ---------------------------------------------------------------------------
 // extraerFiltros() : lee el query del GET y saca el FiltroMediciones
 //
-// Solo se aceptan cuatro filtros: desde, hasta, uuid_beacon y minor.
+// Solo se aceptan cuatro filtros: desde, hasta, tipo_medicion y
+// valor_medicion.
 // Los que no vengan se quedan en null, que significa "sin filtro" (no
-// "cero" ni "vacio"). Esto es importante: minor = null es "traeme
-// todas las mediciones", mientras que minor = 1234 es "traeme solo las
-// que valen 1234".
+// "cero" ni "vacio"). Esto es importante: valor_medicion = null es "traeme
+// todas las mediciones", mientras que valor_medicion = 1234 es "traeme solo
+// las que valen 1234".
 //
-// OJO: un filtro que venga pero este vacio (?minor=) tambien se queda en
-// null, porque un parametro vacio no es un filtro, es un error de quien
-// escribe la URL. Un filtro de minor que no sea un numero NO se descarta
-// aqui: se pasa tal cual a la logica, que es quien decide si vale
-// (PROMPT 4). Aqui no se validan datos.
+// OJO: un filtro que venga pero este vacio (?valor_medicion=) tambien se
+// queda en null, porque un parametro vacio no es un filtro, es un error de
+// quien escribe la URL. Un filtro de valor_medicion que no sea un numero NO
+// se descarta aqui: se pasa tal cual a la logica, que es quien decide si
+// vale (PROMPT 4). Aqui no se validan datos.
 //
 // query: Text --> extraerFiltros() --> FiltroMediciones
 // ---------------------------------------------------------------------------
@@ -68,10 +76,10 @@ function extraerFiltros( $query ) {
   $filtro = new stdClass();
 
   // el punto de partida es $_GET (que es el query del GET)
-  $filtro->desde       = null;
-  $filtro->hasta       = null;
-  $filtro->uuid_beacon = null;
-  $filtro->minor       = null;
+  $filtro->desde          = null;
+  $filtro->hasta          = null;
+  $filtro->tipo_medicion  = null;
+  $filtro->valor_medicion = null;
 
   if ( ! is_array( $query ) ) {
     return $filtro;
@@ -87,15 +95,15 @@ function extraerFiltros( $query ) {
     $filtro->hasta = trim( (string) $query['hasta'] );
   }
 
-  // ---- uuid_beacon ----
-  if ( isset( $query['uuid_beacon'] ) && trim( (string) $query['uuid_beacon'] ) !== '' ) {
-    $filtro->uuid_beacon = trim( (string) $query['uuid_beacon'] );
+  // ---- tipo_medicion ----
+  if ( isset( $query['tipo_medicion'] ) && trim( (string) $query['tipo_medicion'] ) !== '' ) {
+    $filtro->tipo_medicion = trim( (string) $query['tipo_medicion'] );
   }
 
-  // ---- minor ----
+  // ---- valor_medicion ----
   // llega como texto porque en un query todo es texto: "1234"
-  if ( isset( $query['minor'] ) && trim( (string) $query['minor'] ) !== '' ) {
-    $filtro->minor = trim( (string) $query['minor'] );
+  if ( isset( $query['valor_medicion'] ) && trim( (string) $query['valor_medicion'] ) !== '' ) {
+    $filtro->valor_medicion = trim( (string) $query['valor_medicion'] );
   }
 
   return $filtro;

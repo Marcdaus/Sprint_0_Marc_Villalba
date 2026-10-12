@@ -1,71 +1,64 @@
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: Java
+// Curso: 3ºGTI
+// =====================================
+
 
 package com.example.btlmarc;
-
-import java.util.Arrays;
 
 // -----------------------------------------------------------------------------------
 // Medicion: los datos de UNA lectura de nuestro beacon, ya interpretados.
 // Solo getters: los campos son privados (encapsulados), nadie los cambia por fuera.
-// Los valores salen de la trama (TramaIBeacon) + el nombre y el RSSI que da Android.
+//
+// Del beacon salen el TIPO y el VALOR; el nombre lo da Android.
+//  - el tipo viaja CODIFICADO en los 8 bits altos del campo "major" de la
+//    trama, y aqui se guarda ya como TEXTO ("CO2", "temperatura", "prueba"),
+//    que es lo que entiende el servidor.
+//  - el valor viaja en el campo "minor".
 // -----------------------------------------------------------------------------------
 public class Medicion {
 
     // ----- los datos guardados: los mismos campos que luego salen en el JSON -----
 
-    private byte[] uuid;      // 16 bytes del beacon
-    private String nombre;    // nombre del emisor que anuncia Android
-    private int major;        // major de la trama
-    private int minor;        // minor de la trama (valor del proyecto, hoy 1234)
-    private int txPower;      // tx_power de la trama
-    private int rssi;         // intensidad de la señal, en dBm
+    private String nombre;        // nombre de la emisora (nombre_emisora del JSON)
+    private String tipoMedicion;  // ya en texto: "CO2" | "temperatura" | "prueba"
+    private int valorMedicion;    // valor del proyecto (el minor de la trama, hoy 1234)
 
     // -------------------------------------------------------------------------------
     // -------------------------------------------------------------------------------
     /**
-     * Crea una Medicion a partir de la trama del beacon, el nombre y el RSSI.
-     * El uuid, el major, el minor y el txPower se copian de la trama.
+     * Crea una Medicion a partir de la trama del beacon y el nombre.
+     * El tipo se traduce del major (los 8 bits altos) y el valor sale del minor.
      *
      * @param tib    la trama del beacon ya interpretada
-     * @param nombre el nombre del emisor
-     * @param rssi   la intensidad de la señal en dBm
+     * @param nombre el nombre de la emisora
      */
-    // tib: TramaIBeacon, nombre: Text, rssi: Z --> Medicion() -->
-    public Medicion(TramaIBeacon tib, String nombre, int rssi) {
+    // tib: TramaIBeacon, nombre: Text --> Medicion() -->
+    public Medicion(TramaIBeacon tib, String nombre) {
 
-        this.uuid = Arrays.copyOf(tib.getUUID(), tib.getUUID().length); // copia defensiva
         this.nombre = nombre;
 
-        // major y minor son 2 bytes BIG-ENDIAN en la trama, y bytesToInt() los lee
-        // como un numero grande SIN signo, asi que ya salen en el orden correcto.
-        // major = 3584 + contador y sube cada segundo: si se leyera con signo
-        // (BigInteger) a partir de 32767 saldria negativo.
-        this.major = Utilidades.bytesToInt(tib.getMajor());
-        this.minor = Utilidades.bytesToInt(tib.getMinor());
+        // el tipo viaja CODIFICADO en los 8 bits altos del major:
+        //     major = (codigo << 8) | contador
+        // asi que con major >> 8 se recupera el codigo (1=CO2, 2=temperatura,
+        // 3=prueba) y tipoDeMedicion() lo pasa a texto.
+        int major = Utilidades.bytesToInt(tib.getMajor());
+        this.tipoMedicion = AnalizadorBeacons.tipoDeMedicion(major >> 8);
 
-        // el txPower es SI signo: 0xC6 son -58 dBm, que es un valor normal.
-        this.txPower = Utilidades.leerByteConSigno(tib.getTxPower());
-        this.rssi = rssi;
+        // el valor del proyecto viaja en el minor (2 bytes big-endian sin signo,
+        // por eso bytesToInt() y no BigInteger)
+        this.valorMedicion = Utilidades.bytesToInt(tib.getMinor());
 
     } // ()
 
     // -------------------------------------------------------------------------------
-    // Devuelve los 16 bytes del uuid del beacon.
+    // Devuelve el nombre de la emisora (nombre_emisora del JSON).
     // -------------------------------------------------------------------------------
     /**
-     * Da los 16 bytes del uuid del beacon.
-     * @return una copia de los 16 bytes del uuid
-     */
-    // --> getUUID() --> [N]_16
-    public byte[] getUUID() {
-        return Arrays.copyOf(this.uuid, this.uuid.length); // copia defensiva
-    }
-
-    // -------------------------------------------------------------------------------
-    // Devuelve el nombre del emisor (nombre_emisora del JSON).
-    // -------------------------------------------------------------------------------
-    /**
-     * Da el nombre del emisor.
-     * @return el nombre del emisor
+     * Da el nombre de la emisora.
+     * @return el nombre de la emisora
      */
     // --> getNombre() --> Text
     public String getNombre() {
@@ -73,51 +66,27 @@ public class Medicion {
     }
 
     // -------------------------------------------------------------------------------
-    // Devuelve el major que traía la trama.
+    // Devuelve el tipo de medicion ya en texto.
     // -------------------------------------------------------------------------------
     /**
-     * Da el major de la trama.
-     * @return el major
+     * Da el tipo de medicion ("CO2", "temperatura" o "prueba").
+     * @return el tipo de medicion en texto
      */
-    // --> getMajor() --> Z
-    public int getMajor() {
-        return this.major;
+    // --> getTipoMedicion() --> Text
+    public String getTipoMedicion() {
+        return this.tipoMedicion;
     }
 
     // -------------------------------------------------------------------------------
-    // Devuelve el minor que traía la trama (valor del proyecto, hoy 1234).
+    // Devuelve el valor del proyecto que traia la trama (hoy 1234).
     // -------------------------------------------------------------------------------
     /**
-     * Da el minor de la trama.
-     * @return el minor
+     * Da el valor de la medicion.
+     * @return el valor del proyecto
      */
-    // --> getMinor() --> Z
-    public int getMinor() {
-        return this.minor;
-    }
-
-    // -------------------------------------------------------------------------------
-    // Devuelve el tx_power que traía la trama.
-    // -------------------------------------------------------------------------------
-    /**
-     * Da el tx_power de la trama.
-     * @return el tx_power
-     */
-    // --> getTxPower() --> Z
-    public int getTxPower() {
-        return this.txPower;
-    }
-
-    // -------------------------------------------------------------------------------
-    // Devuelve el RSSI con el que se vio el beacon.
-    // -------------------------------------------------------------------------------
-    /**
-     * Da el RSSI de la lectura.
-     * @return el RSSI en dBm
-     */
-    // --> getRssi() --> Z
-    public int getRssi() {
-        return this.rssi;
+    // --> getValorMedicion() --> Z
+    public int getValorMedicion() {
+        return this.valorMedicion;
     }
 
 } // class

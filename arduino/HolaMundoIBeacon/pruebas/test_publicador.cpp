@@ -1,3 +1,10 @@
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: C++ (Arduino)
+// Curso: 3ºGTI
+// =====================================
+
 // -*- mode: c++ -*-
 // -------------------------------------------------------------------------------------------------
 // test_publicador.cpp
@@ -7,7 +14,7 @@
 // "Publicador.h" real contra una "EmisoraBLE" FALSA (mock) que graba las
 // llamadas, y comprueban:
 //
-//   1. La aritmetica del "major"  ->  calcularMajor( DATOS, contador )
+//   1. La aritmetica del "major"  ->  calcularMajor( PRUEBA, contador )
 //   2. La secuencia de publicarValor()  ->  solo emitir (el delay() se elimino)
 //   3. El valor viaja en el "minor" y es el de VALOR_MINOR (leido del .ino)
 //   4. El "loop()" ya no llama a emitirAnuncioIBeaconLibre ni al anuncio
@@ -182,24 +189,24 @@ static long leerEnteroDeVariable( const std::string & texto,
 
 // -------------------------------------------------------------------------------------------------
 // PRUEBA 1: aritmetica del "major"
-//   calcularMajor( DATOS, contador ) == (14 << 8) | contador
+//   calcularMajor( PRUEBA, contador ) == (3 << 8) | contador
 // -------------------------------------------------------------------------------------------------
 static void pruebaMajor() {
   std::printf( "\n[1] Aritmetica del major (calcularMajor)\n" );
 
-  const uint8_t DATOS = Publicador::MedicionesID::DATOS;
+  const uint8_t PRUEBA = Publicador::MedicionesID::PRUEBA;
 
-  comprobar( DATOS == 14,
-             "MedicionesID::DATOS vale 14 (0x0E)" );
+  comprobar( PRUEBA == 3,
+             "MedicionesID::PRUEBA vale 3 (0x03)" );
 
-  comprobar( Publicador::calcularMajor( DATOS, 0 )    == 3584,
-             "calcularMajor(DATOS, 0)   == 3584  (0x0E00)" );
+  comprobar( Publicador::calcularMajor( PRUEBA, 0 )    == 768,
+             "calcularMajor(PRUEBA, 0)   == 768  (0x0300)" );
 
-  comprobar( Publicador::calcularMajor( DATOS, 1 )    == 3585,
-             "calcularMajor(DATOS, 1)   == 3585  (0x0E01)" );
+  comprobar( Publicador::calcularMajor( PRUEBA, 1 )    == 769,
+             "calcularMajor(PRUEBA, 1)   == 769  (0x0301)" );
 
-  comprobar( Publicador::calcularMajor( DATOS, 255 )  == 3839,
-             "calcularMajor(DATOS, 255) == 3839  (0x0EFF)" );
+  comprobar( Publicador::calcularMajor( PRUEBA, 255 )  == 1023,
+             "calcularMajor(PRUEBA, 255) == 1023 (0x03FF)" );
 } // ()
 
 // -------------------------------------------------------------------------------------------------
@@ -259,9 +266,9 @@ static void pruebaSecuenciaYMinor() {
   comprobar( ! Globales::g_mensajes.empty(),
              "avisa por el puerto serie cada vez que emite un beacon" );
 
-  // --- major: (DATOS << 8) | contador, con el contador usado ---
-  comprobar( g_ultimoMajor == ( (14 << 8) | 7 ),
-             "el major es (14 << 8) | contador" );
+  // --- major: (PRUEBA << 8) | contador, con el contador usado ---
+  comprobar( g_ultimoMajor == ( (3 << 8) | 7 ),
+             "el major es (3 << 8) | contador" );
 
   // --- minor: exactamente VALOR_MINOR ---
   std::printf( "\n[3] El valor viaja en el minor\n" );
@@ -318,10 +325,10 @@ int main() {
 //        =====================================================
 //
 //        [1] Aritmetica del major (calcularMajor)
-//          OK    MedicionesID::DATOS vale 14 (0x0E)
-//          OK    calcularMajor(DATOS, 0)   == 3584  (0x0E00)
-//          OK    calcularMajor(DATOS, 1)   == 3585  (0x0E01)
-//          OK    calcularMajor(DATOS, 255) == 3839  (0x0EFF)
+//          OK    MedicionesID::PRUEBA vale 3 (0x03)
+//          OK    calcularMajor(PRUEBA, 0)   == 768  (0x0300)
+//          OK    calcularMajor(PRUEBA, 1)   == 769  (0x0301)
+//          OK    calcularMajor(PRUEBA, 255) == 1023 (0x03FF)
 //
 //        [2] Secuencia de publicarValor() con emisora FALSA
 //          OK    se encuentra el sketch ../HolaMundoIBeacon.ino
@@ -331,7 +338,7 @@ int main() {
 //          OK    pararAnuncio() es lo que detiene el anuncio
 //          OK    tras pararAnuncio() ya no hay anuncio en curso
 //          OK    avisa por el puerto serie cada vez que emite un beacon
-//          OK    el major es (14 << 8) | contador
+//          OK    el major es (3 << 8) | contador
 //
 //        [3] El valor viaja en el minor
 //               VALOR_MINOR leido del .ino = 1234
@@ -349,7 +356,7 @@ int main() {
 //    - Abrir el monitor serie a 115200. Cada beacon emitido escribe:
 //
 //          ---- loop(): empieza 1
-//              beacon: minor(valor)=1234 major=3585 rssi=-53
+//              beacon: minor(valor)=1234 major=769 rssi=-53
 //              anunciando 1000 ms
 //              anuncio parado
 //
@@ -357,5 +364,5 @@ int main() {
 //      esta antes (placa, puerto serie o alimentacion).
 //    - Con un escaner BLE (nRF Connect, LightBlue...) comprobar que aparece
 //      un iBeacon con companyID 0x004C, uuid "EPSG-GTI-MARC-3A",
-//      major 0x0E.. y minor 1234 (= VALOR_MINOR).
+//      major 0x03.. y minor 1234 (= VALOR_MINOR).
 // -------------------------------------------------------------------------------------------------

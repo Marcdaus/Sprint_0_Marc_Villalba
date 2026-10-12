@@ -1,3 +1,10 @@
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: Java
+// Curso: 3ºGTI
+// =====================================
+
 
 package com.example.btlmarc;
 
@@ -28,6 +35,24 @@ public class AnalizadorBeacons {
     public static final String RUTA_GUARDAR    = "servidor/rest/guardarMedicion.php"; // ruta del PHP que guarda la medicion
     public static final String RUTA_RECUPERAR  = "servidor/rest/recuperarMedicion.php"; // ruta del PHP que devuelve las mediciones
     public static final int    RSSI_MINIMO     = -127;                    // RSSI mas bajo que se acepta (dBm)
+    // Cada cuanto se manda COMO MUCHO una medicion al servidor (milisegundos).
+    // La plaquita emite durante DURACION_ANUNCIO (1 s) y calla otros 4 s; en esa
+    // ventana de 1 s el escaner ve muchos paquetes y sin esto se mandaria un POST
+    // por cada uno (decenas de golpe). Con 2000 ms pasa una medicion por ventana,
+    // y como las ventanas estan a 5 s no se pierde ninguna.
+    public static final long   MS_ENTRE_MEDICIONES = 2000;
+
+    // Codigos de tipo de medicion que viajan en los 8 bits altos del "major"
+    // del beacon (los mismos que anuncia la plaquita: Publicador.h) y el texto
+    // en el que se traducen. El servidor espera el TEXTO, no el codigo.
+    public static final int    CODIGO_CO2         = 1;
+    public static final int    CODIGO_TEMPERATURA = 2;
+    public static final int    CODIGO_PRUEBA      = 3;
+
+    public static final String TIPO_CO2         = "CO2";
+    public static final String TIPO_TEMPERATURA = "temperatura";
+    public static final String TIPO_PRUEBA      = "prueba";
+    public static final String TIPO_DESCONOCIDO = "desconocido"; // por si llega un codigo que no conocemos
     // ======================================
 
     // ----- Constantes de la trama iBeacon (no se tocan) -----
@@ -206,10 +231,57 @@ public class AnalizadorBeacons {
     } // ()
 
     // -------------------------------------------------------------------------------
+    // Traduce el codigo de tipo de medicion a texto.
+    // -------------------------------------------------------------------------------
+    /**
+     * Pasa el codigo de tipo de medicion (los 8 bits altos del major) a texto.
+     * Es una funcion PURA: no toca Android, asi que se puede probar en el PC.
+     *
+     * @param codigo 1=CO2, 2=temperatura, 3=prueba
+     * @return "CO2", "temperatura", "prueba", o "desconocido" si el codigo no es ninguno
+     */
+    // codigo: Z --> tipoDeMedicion() --> Text
+    public static String tipoDeMedicion(int codigo) {
+
+        switch (codigo) {
+            case CODIGO_CO2:         return TIPO_CO2;
+            case CODIGO_TEMPERATURA: return TIPO_TEMPERATURA;
+            case CODIGO_PRUEBA:      return TIPO_PRUEBA;
+            default:                 return TIPO_DESCONOCIDO;
+        }
+
+    } // ()
+
+    // -------------------------------------------------------------------------------
+    // Saca el tipo de medicion de la trama (los 8 bits altos del major).
+    // -------------------------------------------------------------------------------
+    /**
+     * Lee el major de la trama y traduce su codigo de tipo (8 bits altos) a texto.
+     *
+     * @param tib la trama del beacon
+     * @return el tipo de medicion en texto
+     */
+    // tib: TramaIBeacon --> tipoDeMedicion() --> Text
+    public static String tipoDeMedicion(TramaIBeacon tib) {
+
+        if (tib == null) {
+            return TIPO_DESCONOCIDO;
+        }
+
+        // el tipo va en los 8 bits altos: major = (codigo << 8) | contador
+        int major = Utilidades.bytesToInt(tib.getMajor());
+
+        return tipoDeMedicion(major >> 8);
+
+    } // ()
+
+    // -------------------------------------------------------------------------------
     // -------------------------------------------------------------------------------
     /**
      * Monta el JSON de la medicion con los campos y en el orden que espera el servidor.
-     * NO manda "id" ni "fecha": eso lo pone la base de datos.
+     * NO manda "id" ni "fecha": eso lo pone la base de datos. Y NO manda uuid ni
+     * major/minor/tx_power/rssi: el tipo y el valor ya van interpretados en texto
+     * y en numero.
      *
      * @param m la medicion con los datos de una lectura
      * @return el texto del JSON
@@ -221,18 +293,30 @@ public class AnalizadorBeacons {
             return "";
         }
 
-        // el uuid son 16 bytes; como son caracteres ASCII, bytesToString() lo deja legible
-        String uuidTexto = Utilidades.bytesToString(m.getUUID());
+        return construirJSON(m.getNombre(), m.getTipoMedicion(), m.getValorMedicion());
+
+    } // ()
+
+    // -------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------------
+    /**
+     * Igual que construirJSON(Medicion), pero con los tres valores sueltos.
+     * Se separa asi para poder probar el JSON sin montar una Medicion entera.
+     *
+     * @param nombre el nombre de la emisora
+     * @param tipo   el tipo de medicion ya en texto
+     * @param valor  el valor de la medicion
+     * @return el texto del JSON
+     */
+    // nombre: Text, tipo: Text, valor: Z --> construirJSON() --> Text
+    public static String construirJSON(String nombre, String tipo, int valor) {
 
         StringBuilder sb = new StringBuilder();
 
         sb.append("{");
-        sb.append("\"uuid_beacon\":\"").append(escaparTexto(uuidTexto)).append("\",");
-        sb.append("\"nombre_emisora\":\"").append(escaparTexto(m.getNombre())).append("\",");
-        sb.append("\"major\":").append(m.getMajor()).append(",");
-        sb.append("\"minor\":").append(m.getMinor()).append(",");
-        sb.append("\"tx_power\":").append(m.getTxPower()).append(",");
-        sb.append("\"rssi\":").append(m.getRssi());
+        sb.append("\"nombre_emisora\":\"").append(escaparTexto(nombre)).append("\",");
+        sb.append("\"tipo_medicion\":\"").append(escaparTexto(tipo)).append("\",");
+        sb.append("\"valor_medicion\":").append(valor);
         sb.append("}");
 
         return sb.toString();
@@ -277,6 +361,25 @@ public class AnalizadorBeacons {
     // host: Text, puerto: N, ruta: Text --> construirURL() --> Text
     public static String construirURL(String host, int puerto, String ruta) {
         return "http://" + host + ":" + puerto + "/" + ruta;
+    } // ()
+
+    // -------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------------
+    /**
+     * Dice si ya toca mandar otra medicion al servidor: ha pasado MS_ENTRE_MEDICIONES
+     * desde el ultimo envio. Es PURA (recibe los dos instantes), asi que se puede
+     * probar en el PC sin Android.
+     *
+     * La usa el servicio para no mandar un POST por cada paquete de la misma ventana
+     * de anuncio (saldrian decenas de golpe).
+     *
+     * @param ahora       el instante actual (milisegundos)
+     * @param ultimoEnvio el instante del ultimo envio (milisegundos); 0 si aun no se ha mandado ninguna
+     * @return true si ya se puede mandar otra, false si todavia no toca
+     */
+    // ahora: Z, ultimoEnvio: Z --> debeEnviarMedicion() --> B
+    public static boolean debeEnviarMedicion(long ahora, long ultimoEnvio) {
+        return (ahora - ultimoEnvio) >= MS_ENTRE_MEDICIONES;
     } // ()
 
     // -------------------------------------------------------------------------------

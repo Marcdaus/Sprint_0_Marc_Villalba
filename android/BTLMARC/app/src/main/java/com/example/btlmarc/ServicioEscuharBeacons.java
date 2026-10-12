@@ -1,3 +1,10 @@
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: Java
+// Curso: 3ºGTI
+// =====================================
+
 
 package com.example.btlmarc;
 
@@ -72,6 +79,11 @@ public class ServicioEscuharBeacons  extends IntentService {
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
     private long tiempoDeEspera = 10000;
+
+    // Instante (ms) del ultimo POST que se mando al servidor. Sirve para limitar la
+    // frecuencia: la plaquita emite 1 s cada 5 s y el escaner ve muchos paquetes en
+    // esa ventana, asi que sin esto saldrian decenas de mediciones de golpe.
+    private long instanteUltimoEnvio = 0;
 
     private boolean seguir = true;
 
@@ -334,11 +346,12 @@ public class ServicioEscuharBeacons  extends IntentService {
         // 4. volcar la trama al log y avisar a la pantalla (hook del PROMPT 8)
         AnalizadorBeacons.mostrarTrama(tib);
         this.mostrarEnPantalla(AnalizadorBeacons.NOMBRE_EMISORA
+                + " | tipo=" + AnalizadorBeacons.tipoDeMedicion(tib)
                 + " | valor=" + AnalizadorBeacons.interpretarValor(tib)
                 + " | rssi=" + resultado.getRssi());
 
-        // 5. montar la medicion
-        Medicion m = new Medicion(tib, nombre, resultado.getRssi());
+        // 5. montar la medicion (el tipo y el valor salen de la trama)
+        Medicion m = new Medicion(tib, nombre);
 
         // 6. el cuerpo del POST
         String cuerpo = AnalizadorBeacons.construirJSON(m);
@@ -352,9 +365,18 @@ public class ServicioEscuharBeacons  extends IntentService {
                 AnalizadorBeacons.PUERTO_SERVIDOR,
                 AnalizadorBeacons.RUTA_GUARDAR);
 
+        // 8. limitar la frecuencia: si aun no ha pasado MS_ENTRE_MEDICIONES desde el
+        //    ultimo envio, esta lectura NO se manda (los pasos 4-6 ya salieron: la
+        //    trama y el JSON siguen en el log). Asi se evita el monton de POST de golpe.
+        long ahora = System.currentTimeMillis();
+        if (!AnalizadorBeacons.debeEnviarMedicion(ahora, this.instanteUltimoEnvio)) {
+            return;
+        }
+        this.instanteUltimoEnvio = ahora;
+
         Log.d(AnalizadorBeacons.ETIQUETA_TRAMA_MARC, "POST " + url + " cuerpo=" + cuerpo);
 
-        // 8. mandar el POST.
+        // 9. mandar el POST.
         // Ojo: PeticionarioREST es un AsyncTask y execute() pide el hilo principal.
         // onScanResult ya llega al hilo principal, asi que aqui se puede llamar tranquilo.
         this.crearPeticionarioREST().hacerPeticionREST(METODO_POST, url, cuerpo, this.respuestaDelPOST);

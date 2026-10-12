@@ -1,3 +1,10 @@
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: Java
+// Curso: 3ºGTI
+// =====================================
+
 
 package com.example.btlmarc;
 
@@ -24,7 +31,6 @@ import java.util.Arrays;
 // companyID va en LITTLE-ENDIAN: los bytes 4c 00 son el valor 0x004C (Apple).
 // Leerlos como 0x4C00 es lo que hacia que se rechazaran todos los beacons.
 // -----------------------------------------------------------------------------------
-// @author: Jordi Bataller i Mascarell
 // -----------------------------------------------------------------------------------
 public class TramaIBeacon {
 

@@ -153,8 +153,8 @@ existe la tabla y el movil puede empezar a guardar.
 
 Ojo: se puede volver a importar sin miedo, porque los CREATE son IF NOT
 EXISTS y no borran nada. Lo unico que se duplica son las tres filas de
-ejemplo del final. Para el valor del minor de la demo hay que cambiar
-@minorEjemplo, que esta en el bloque de VARIABLES MODIFICABLES del
+ejemplo del final. Para el valor de la demo hay que cambiar
+@valorEjemplo, que esta en el bloque de VARIABLES MODIFICABLES del
 principio del fichero.
 
 7. QUE PRUEBAS SIGUEN SIENDO UTILES

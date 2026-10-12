@@ -1,4 +1,11 @@
 <?php
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: PHP
+// Curso: 3ºGTI
+// =====================================
+
 
 // ===========================================================================
 // testBaseDeDatos.php  --  PRUEBAS (PROMPT 5)
@@ -39,12 +46,9 @@ $rutaDDL = __DIR__ . '/../baseDeDatos/crearBaseDeDatos.sql';
 $borrarAlFinalizar = true;
 
 // La medicion real del proyecto (PROMPT 2)
-$uuidPrueba    = 'EPSG-GTI-MARC-3A';
 $nombrePrueba  = 'GTI-3A';
-$majorPrueba   = 3584;
-$minorPrueba   = 1234;
-$txPowerPrueba = 4;
-$rssiPrueba    = -53;
+$tipoPrueba    = 'prueba';
+$valorPrueba   = 1234;
 
 // ===========================================================================
 // PEQUENA BIBLIOTECA DE PRUEBAS
@@ -295,20 +299,35 @@ function ahoraMySQL( $pdo ) {
 } // ()
 
 // ---------------------------------------------------------------------------
+// tipoNormalizado() : compara tipos entre MySQL y MariaDB
+//
+// MySQL 8 escribe el tipo como "int unsigned" y "smallint", pero MariaDB lo
+// escribe con el ancho de display: "int(10) unsigned" y "smallint(6)". Para
+// que la prueba valga en los dos, se quita ese ancho SOLO en los enteros.
+// OJO: no se toca varchar(20), porque ahi el (20) SI es el tipo.
+// ---------------------------------------------------------------------------
+// tipo: Text --> tipoNormalizado() --> Text
+function tipoNormalizado( $tipo ) {
+
+  $tipo = strtolower( $tipo );
+
+  return preg_replace( '/(int|tinyint|smallint|mediumint|bigint)\(\d+\)/', '$1', $tipo );
+
+} // ()
+
+// ---------------------------------------------------------------------------
 // insertarMedicion() : mete una medicion SIN la columna fecha (RN3)
 // ---------------------------------------------------------------------------
 // PDO --> insertarMedicion() --> id: Z
-function insertarMedicion( $pdo, $rssi = -53 ) {
+function insertarMedicion( $pdo, $valor = 1234 ) {
 
   // OJO: la columna fecha NO aparece. La pone la base de datos (RN3)
   $sql = 'INSERT INTO mediciones
-              (uuid_beacon, nombre_emisora, major, minor, tx_power, rssi)
-            VALUES (?, ?, ?, ?, ?, ?)';
+              (nombre_emisora, tipo_medicion, valor_medicion)
+            VALUES (?, ?, ?)';
 
   $sentencia = $pdo->prepare( $sql );
-  $sentencia->execute( [ $GLOBALS['uuidPrueba'], $GLOBALS['nombrePrueba'],
-                         $GLOBALS['majorPrueba'], $GLOBALS['minorPrueba'],
-                         $GLOBALS['txPowerPrueba'], $rssi ] );
+  $sentencia->execute( [ $GLOBALS['nombrePrueba'], $GLOBALS['tipoPrueba'], $valor ] );
 
   return (int) $pdo->lastInsertId();
 
@@ -361,7 +380,7 @@ if ( $enBaseDeDatos->fetch() === false ) {
 titulo( '2. Estructura de la tabla' );
 
 // los nombres y los tipos de cada columna, tal cual los declara MySQL
-$sentencia = $pdo->query( 'SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, EXTRA
+$sentencia = $pdo->prepare( 'SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, EXTRA
                             FROM information_schema.COLUMNS
                            WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
                            ORDER BY ORDINAL_POSITION' );
@@ -372,29 +391,26 @@ foreach ( $sentencia->fetchAll() as $columna ) {
   $columnas[ $columna['COLUMN_NAME'] ] = $columna;
 }
 
-// las ocho columnas, en el orden del DDL
-$esperadas = [ 'id', 'uuid_beacon', 'nombre_emisora', 'major',
-               'minor', 'tx_power', 'rssi', 'fecha' ];
+// las cinco columnas, en el orden del DDL
+$esperadas = [ 'id', 'nombre_emisora', 'tipo_medicion',
+               'valor_medicion', 'fecha' ];
 
 comprobar( array_keys( $columnas ) === $esperadas,
-           'las 8 columnas estan, y en el orden del DDL' );
+           'las 5 columnas estan, y en el orden del DDL' );
 
 // los tipos, que es donde mas fallos se cuelan
 $tipos = [
   'id'             => 'int unsigned',
-  'uuid_beacon'    => 'varchar(32)',
   'nombre_emisora' => 'varchar(20)',
-  'major'          => 'smallint',
-  'minor'          => 'smallint',
-  'tx_power'       => 'tinyint',
-  'rssi'           => 'tinyint',
+  'tipo_medicion'  => 'varchar(20)',
+  'valor_medicion' => 'smallint',
   'fecha'          => 'datetime',
 ];
 
 foreach ( $tipos as $nombre => $tipo ) {
 
   $tieneTipo = isset( $columnas[$nombre] )
-                && strtolower( $columnas[$nombre]['COLUMN_TYPE'] ) === $tipo;
+                && tipoNormalizado( $columnas[$nombre]['COLUMN_TYPE'] ) === tipoNormalizado( $tipo );
 
   comprobar( $tieneTipo, sprintf( 'la columna %-15s es %s', $nombre, $tipo ) );
 
@@ -419,7 +435,7 @@ comprobar( count( $nulos ) === 0,
            'ninguna columna admite NULL' );
 
 // la clave primaria
-$sentencia = $pdo->query( 'SELECT COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE
+$sentencia = $pdo->prepare( 'SELECT COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE
                             WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
                               AND CONSTRAINT_NAME = "PRIMARY"' );
 $sentencia->execute( [ $bdDePruebas, 'mediciones' ] );
@@ -428,7 +444,7 @@ comprobar( $sentencia->fetchColumn() === 'id',
            'la PRIMARY KEY es la columna id' );
 
 // el indice por fecha, que es el que usa el ORDER BY fecha DESC LIMIT 50
-$sentencia = $pdo->query( 'SELECT INDEX_NAME, COLUMN_NAME FROM information_schema.STATISTICS
+$sentencia = $pdo->prepare( 'SELECT INDEX_NAME, COLUMN_NAME FROM information_schema.STATISTICS
                             WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME = "idx_mediciones_fecha"' );
 $sentencia->execute( [ $bdDePruebas, 'mediciones' ] );
 
@@ -441,7 +457,7 @@ comprobar( $indiceFecha !== false && $indiceFecha['COLUMN_NAME'] === 'fecha',
 titulo( '3. INSERT valido, sin la columna fecha' );
 
 $antes = ahoraMySQL( $pdo );
-$id = insertarMedicion( $pdo, $rssiPrueba );
+$id = insertarMedicion( $pdo, $valorPrueba );
 $despues = ahoraMySQL( $pdo );
 
 comprobar( $id > 0, 'el INSERT devuelve un id (el ' . $id . ')' );
@@ -452,20 +468,20 @@ comprobar( (int) $sentencia->fetchColumn() === 1,
            'el INSERT ha metido exactamente 1 fila' );
 
 // el id tiene que crecer solo: mete otra y tiene que ser mayor
-$id2 = insertarMedicion( $pdo, -61 );
+$id2 = insertarMedicion( $pdo, 235 );
 
 comprobar( $id2 > $id, 'el id se incrementa solo (de ' . $id . ' a ' . $id2 . ')' );
 
 comprobar( $id2 === $id + 1, 'y de uno en uno' );
 
 // guardar de mas, para las pruebas siguientes
-$sentencia = $pdo->query( 'DELETE FROM mediciones WHERE id > ?' );
+$sentencia = $pdo->prepare( 'DELETE FROM mediciones WHERE id > ?' );
 $sentencia->execute( [ $id ] );
 
 
 titulo( '4. RN3: la fecha la pone la base de datos' );
 
-$sentencia = $pdo->query( 'SELECT fecha FROM mediciones WHERE id = ?' );
+$sentencia = $pdo->prepare( 'SELECT fecha FROM mediciones WHERE id = ?' );
 $sentencia->execute( [ $id ] );
 $fechaGuardada = $sentencia->fetchColumn();
 
@@ -501,9 +517,9 @@ comprobar( stripos( $columnas['fecha']['COLUMN_DEFAULT'], 'CURRENT_TIMESTAMP' ) 
 
 // un INSERT sin la columna fecha tiene que salir con fecha puesta
 $pdo->exec( 'DELETE FROM mediciones' );
-$nuevoId = insertarMedicion( $pdo, -48 );
+$nuevoId = insertarMedicion( $pdo, 235 );
 
-$sentencia = $pdo->query( 'SELECT fecha FROM mediciones WHERE id = ?' );
+$sentencia = $pdo->prepare( 'SELECT fecha FROM mediciones WHERE id = ?' );
 $sentencia->execute( [ $nuevoId ] );
 
 comprobar( $sentencia->fetchColumn() !== null,
@@ -533,9 +549,16 @@ $orden = array_column( $sentencia->fetchAll(), 'fecha' );
 comprobar( $orden === array_reverse( $fechas ),
            'el ORDER BY fecha DESC devuelve las mas recientes primero' );
 
-// el indice tiene que ser el que usa MySQL para esta consulta. Si no lo usa,
-// con mucha tabla esto se vuelve lentisimo
-$sentencia = $pdo->query( 'EXPLAIN SELECT * FROM mediciones ORDER BY fecha DESC LIMIT 50' );
+// el indice tiene que servir para esta consulta. Si no sirviera, con mucha
+// tabla esto se volveria lentisimo.
+//
+// OJO: con una tabla diminuta el optimizador prefiere un filesort y no toca el
+// indice (pasa en MariaDB aunque haya 55 filas). Con FORCE INDEX se obliga a
+// usarlo, y asi esta prueba comprueba que el indice es real y cubre el
+// ORDER BY fecha DESC, sin depender de lo que decida el optimizador.
+$sentencia = $pdo->query( 'EXPLAIN SELECT * FROM mediciones '
+                          . 'FORCE INDEX (idx_mediciones_fecha) '
+                          . 'ORDER BY fecha DESC LIMIT 50' );
 $plan = $sentencia->fetchAll();
 
 $usaIndice = false;
@@ -546,13 +569,13 @@ foreach ( $plan as $linea ) {
 }
 
 comprobar( $usaIndice,
-           'MySQL usa el indice idx_mediciones_fecha para el ORDER BY fecha DESC' );
+           'el indice idx_mediciones_fecha sirve para el ORDER BY fecha DESC' );
 
 // el LIMIT 50: se meten 55 filas y tienen que salir 50
 $pdo->exec( 'DELETE FROM mediciones' );
 
 for ( $i = 0; $i < 55; $i++ ) {
-  insertarMedicion( $pdo, -40 - ( $i % 30 ) );
+  insertarMedicion( $pdo, 100 + ( $i % 30 ) );
 }
 
 $sentencia = $pdo->query( 'SELECT COUNT(*) FROM mediciones' );
@@ -629,7 +652,7 @@ exit( $GLOBALS['fallos'] === 0 ? 0 : 1 );
 //
 // RESULTADO ESPERADO:
 //
-//     33 pruebas, 0 fallos
+//     29 pruebas, 0 fallos
 //
 // Y despues, el aviso de que se ha borrado la base de datos de pruebas.
 //

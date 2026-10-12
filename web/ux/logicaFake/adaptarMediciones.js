@@ -1,11 +1,18 @@
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: JavaScript
+// Curso: 3ºGTI
+// =====================================
+
 // ---------------------------------------------------
 //
 // Traduce las mediciones que devuelve el servidor a objetos planos que la
 // web ya puede pintar.
 //
-// El servidor manda los nombres como los tiene en la tabla (uuid_beacon,
-// tx_power...); aqui se les quita el "_" para que la web lea mejor:
-//   uuid_beacon -> uuid,   tx_power -> txPower
+// El servidor manda los nombres como los tiene en la tabla (nombre_emisora,
+// tipo_medicion, valor_medicion); aqui se acortan para que la web lea mejor:
+//   nombre_emisora -> nombre,   tipo_medicion -> tipo,   valor_medicion -> valor
 //
 // Recibe la lista que llega de rest/recuperarMedicion.php y devuelve una
 // lista nueva, en el mismo orden. NO toca el DOM y NO guarda nada: la
@@ -33,22 +40,16 @@ function adaptarMediciones( mediciones ) {
 			// el id lo enseña la web en la primera columna de la tabla
 			id: viene( medicion, "id" ) ? medicion.id : null,
 
-			// el nombre del beacon, que es lo que va en la cabecera
-			uuid: viene( medicion, "uuid_beacon" ) ? medicion.uuid_beacon : null,
-
+			// el nombre de la emisora
 			nombre: viene( medicion, "nombre_emisora" ) ? medicion.nombre_emisora : null,
 
-			// los tres numeros llegan como numeros del servidor (ver el
-			// final de recuperarMedicion()), no como texto
-			major: viene( medicion, "major" ) ? medicion.major : null,
+			// el tipo de medicion, ya en texto ("CO2", "temperatura", "prueba")
+			tipo: viene( medicion, "tipo_medicion" ) ? medicion.tipo_medicion : null,
 
-			// el minor es el valor que viaja dentro del iBeacon. Se copia
-			// tal cual, sin redondear ni convertir
-			minor: viene( medicion, "minor" ) ? medicion.minor : null,
-
-			txPower: viene( medicion, "tx_power" ) ? medicion.tx_power : null,
-
-			rssi: viene( medicion, "rssi" ) ? medicion.rssi : null,
+			// el valor del proyecto. Llega como numero del servidor (ver el
+			// final de recuperarMedicion()), no como texto. Se copia tal cual,
+			// sin redondear ni convertir
+			valor: viene( medicion, "valor_medicion" ) ? medicion.valor_medicion : null,
 
 			// la fecha sin tocar, en el texto del servidor
 			fecha: viene( medicion, "fecha" ) ? medicion.fecha : null
@@ -64,7 +65,7 @@ function adaptarMediciones( mediciones ) {
 // Pequeña ayuda para adaptarMediciones().
 //
 // No se puede usar "||" para comprobar si un campo viene informado,
-// porque el rssi puede ser justo 0 y con "||" se perdería (0 es falsy en
+// porque el valor puede ser justo 0 y con "||" se perdería (0 es falsy en
 // JavaScript). Con esto se distingue "viene con 0" de "no viene".
 //
 // ---------------------------------------------------

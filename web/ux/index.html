@@ -1,3 +1,10 @@
+<!-- =====================================
+     Autor: Marc Villalba Meseguer
+     Proyecto: Sprint_0_Marc_Villalba
+     Lenguaje: HTML
+     Curso: 3ºGTI
+     ===================================== -->
+
 <!DOCTYPE html>
 <!-- ====================================================================== -->
 <!-- PAGINA PRINCIPAL DE LA WEB  (PROMPT 7, parte de estructura)           -->
@@ -9,7 +16,7 @@
 <!-- <style> que esta marcado como "AQUI VA EL CSS".                        -->
 <!--                                                                          -->
 <!-- Los datos NO salen de aqui: los pide logicaFake/consultarMediciones.js  -->
-<!-- al servidor y llegan ya adaptados (id, nombre, minor, fecha...).         -->
+<!-- al servidor y llegan ya adaptados (id, nombre, tipo, valor, fecha...).   -->
 <!-- Si la lista de mediciones esta vacia, sale un texto en vez de tablas.  -->
 <!-- ====================================================================== -->
 <html lang="es">
@@ -79,32 +86,19 @@ function celda( valor ) {
 }
 
 // ----------------------------------------------------------------------
-// La columna "Medicion" es el minor del beacon, y SIEMPRE con "ppm"
-// detras. Da igual el valor que tenga: 1234 ppm, 0 ppm, -5 ppm...
+// Crea una fila con los cinco datos del diseño y la mete en la tabla.
+// El orden de las celdas es el orden de las columnas del <thead>:
+//   id, tipo, valor, nombre_emisora, fecha.
 //
-// Si el minor no viene, se deja la celda vacia (no tiene sentido
-// escribir "null ppm").
-// ----------------------------------------------------------------------
-function textoMedicion( minor ) {
-
-  if ( minor === null || minor === undefined ) {
-    return "";
-  }
-
-  return minor + " ppm";
-
-}
-
-// ----------------------------------------------------------------------
-// Crea una fila con los cuatro datos del diseño y la mete en la tabla.
-// El orden de las celdas es el orden de las columnas del <thead>.
+// Si algún dato no viene, celda() deja la celda vacía.
 // ----------------------------------------------------------------------
 function pintarFila( cuerpo, medicion ) {
 
   const fila = document.createElement( "tr" );
 
   fila.appendChild( celda( medicion.id ) );
-  fila.appendChild( celda( textoMedicion( medicion.minor ) ) );
+  fila.appendChild( celda( medicion.tipo ) );
+  fila.appendChild( celda( medicion.valor ) );
   fila.appendChild( celda( medicion.nombre ) );
   fila.appendChild( celda( medicion.fecha ) );
 
@@ -195,7 +189,8 @@ document.addEventListener( "DOMContentLoaded", iniciar );
   <thead>
     <tr>
       <th>id</th>
-      <th>Medición</th>
+      <th>Tipo</th>
+      <th>Valor</th>
       <th>nombre_emisora</th>
       <th>Fecha y Hora</th>
     </tr>
@@ -217,7 +212,8 @@ document.addEventListener( "DOMContentLoaded", iniciar );
   <thead>
     <tr>
       <th>id</th>
-      <th>Medición</th>
+      <th>Tipo</th>
+      <th>Valor</th>
       <th>nombre_emisora</th>
       <th>Fecha y Hora</th>
     </tr>

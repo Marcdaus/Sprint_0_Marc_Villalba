@@ -1,4 +1,10 @@
-// -*- mode: c++ -*-
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: C++ (Arduino)
+// Curso: 3ºGTI
+// =====================================
+
 
 // --------------------------------------------------------------
 // Publicador: publica el valor del proyecto como un iBeacon
@@ -6,10 +12,12 @@
 //
 // La plaquita (nRF52840) anuncia un iBeacon cuyo uuid es
 // "EPSG-GTI-MARC-3A" (16 bytes, los que caben en el campo uuid
-// del iBeacon) y cuyo VALOR DEL PROYECTO viaja en el campo
-// "minor" (int16). La app Android escucha ese beacon, se queda
-// solo con el nuestro (companyID 0x004C) y sube el "minor" al
-// servidor REST.
+// del iBeacon). En el campo "major" viaja el TIPO DE MEDICION
+// codificado (8 bits altos) y el contador (8 bits bajos); en el
+// campo "minor" (int16) viaja el VALOR DEL PROYECTO. La app
+// Android escucha ese beacon, se queda solo con el nuestro
+// (companyID 0x004C), traduce el tipo a texto y sube el tipo y el
+// valor al servidor REST.
 //
 // La clase no emite por su cuenta: delega en EmisoraBLE. El
 // metodo "publicarValor()" es el que usa el "loop()" del programa
@@ -17,8 +25,6 @@
 // esqueleto y se dejan intactos.
 //
 // Notacion: Logical Design & Reverse Engineering v3
-// --------------------------------------------------------------
-// Jordi Bataller i Mascarell
 // --------------------------------------------------------------
 
 #ifndef PUBLICADOR_H_INCLUIDO
@@ -55,11 +61,13 @@ public:
 
   // ............................................................
   // ............................................................
+  // Codigo de cada tipo de medicion. Viaja en los 8 bits altos del
+  // campo "major" del iBeacon; la app Android lo traduce a texto
+  // ("CO2", "temperatura", "prueba").
   enum MedicionesID  {
-	CO2 = 11,
-	TEMPERATURA = 12,
-	RUIDO = 13,
-	DATOS = 14  // (new) tipo de medicion del valor del proyecto
+	CO2 = 1,
+	TEMPERATURA = 2,
+	PRUEBA = 3  // (new) tipo de medicion del valor del proyecto
   };
 
   // ............................................................
@@ -141,7 +149,7 @@ public:
   // ............................................................
   static uint16_t calcularMajor( uint8_t tipo, uint8_t contador ) {
 
-	// (14 << 8) | contador  ->  0x0E00 | contador  para DATOS
+	// (3 << 8) | contador  ->  0x0300 | contador  para PRUEBA
 	return (uint16_t) ( (tipo << 8) | contador );
   } // ()
 
@@ -162,9 +170,9 @@ public:
   void publicarValor( int16_t valor, uint8_t contador, long tiempoEspera ) {
 
 	//
-	// 1. calculamos el major: (DATOS << 8) + contador
+	// 1. calculamos el major: (PRUEBA << 8) + contador
 	//
-	uint16_t major = calcularMajor( MedicionesID::DATOS, contador );
+	uint16_t major = calcularMajor( MedicionesID::PRUEBA, contador );
 
 	//
 	// 2. aviso por el puerto serie de lo que se va a emitir

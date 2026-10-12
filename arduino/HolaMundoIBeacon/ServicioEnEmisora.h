@@ -1,9 +1,10 @@
-// -*- mode: c++ -*-
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: C++ (Arduino)
+// Curso: 3ºGTI
+// =====================================
 
-// ----------------------------------------------------------
-// Jordi Bataller i Mascarell
-// 2019-07-17
-// ----------------------------------------------------------
 #ifndef SERVICIO_EMISORA_H_INCLUIDO
 #define SERVICIO_EMISORA_H_INCLUIDO
 

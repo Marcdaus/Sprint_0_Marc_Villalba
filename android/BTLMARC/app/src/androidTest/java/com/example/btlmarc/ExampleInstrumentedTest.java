@@ -1,3 +1,10 @@
+// =====================================
+// Autor: Marc Villalba Meseguer
+// Proyecto: Sprint_0_Marc_Villalba
+// Lenguaje: Java
+// Curso: 3ºGTI
+// =====================================
+
 package com.example.btlmarc;
 
 import android.content.Context;
