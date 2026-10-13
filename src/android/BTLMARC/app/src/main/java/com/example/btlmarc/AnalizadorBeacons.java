@@ -24,7 +24,7 @@ public class AnalizadorBeacons {
     // ====== VARIABLES MODIFICABLES ======
     // (public: el servicio vive en otro paquete y las tiene que poder leer)
     public static final String UUID_BEACON     = "EPSG-GTI-MARC-3A";       // uuid de NUESTRO beacon (16 caracteres)
-    public static final String NOMBRE_EMISORA  = "GTI-3A";                // nombre_emisora que va en el JSON
+    public static final String ID_PLAQUITA     = "GTI-3A";                 // id_plaquita que va en el JSON
 
     // IP del PC con el servidor REST. OJO: esta IP es la del PC en la red de
     // casa, y el router la puede cambiar (cada vez que se reinicia, por
@@ -319,7 +319,7 @@ public class AnalizadorBeacons {
         StringBuilder sb = new StringBuilder();
 
         sb.append("{");
-        sb.append("\"nombre_emisora\":\"").append(escaparTexto(nombre)).append("\",");
+        sb.append("\"id_plaquita\":\"").append(escaparTexto(nombre)).append("\",");
         sb.append("\"tipo_medicion\":\"").append(escaparTexto(tipo)).append("\",");
         sb.append("\"valor_medicion\":").append(valor);
         sb.append("}");

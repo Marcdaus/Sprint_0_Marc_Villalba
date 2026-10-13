@@ -37,7 +37,7 @@ MS_ENTRE_MEDICIONES = 2000 ms
                  |
                  |   calcularMajor()
                  |
-(codigo, contador) --> calcularMajor() --x--> major: N
+(codigo: N, contador: N) --> calcularMajor() --x--> major: N
                  |
                  |
                  |   emitirAnuncio() / pararAnuncio()

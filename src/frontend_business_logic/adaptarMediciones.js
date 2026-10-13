@@ -11,9 +11,9 @@
 // Traduce las mediciones que devuelve el servidor a objetos planos que la
 // web ya puede pintar.
 //
-// El servidor manda los nombres como los tiene en la tabla (nombre_emisora,
+// El servidor manda los nombres como los tiene en la tabla (id_plaquita,
 // tipo_medicion, valor_medicion); aqui se acortan para que la web lea mejor:
-//   nombre_emisora -> nombre,   tipo_medicion -> tipo,   valor_medicion -> valor
+//   id_plaquita -> nombre,   tipo_medicion -> tipo,   valor_medicion -> valor
 //
 // Recibe la lista que llega de rest/recuperarMedicion.php y devuelve una
 // lista nueva, en el mismo orden. NO toca el DOM y NO guarda nada: la
@@ -39,7 +39,7 @@ function adaptarMediciones( mediciones ) {
 		return {
 
 			// el nombre de la emisora
-			nombre: viene( medicion, "nombre_emisora" ) ? medicion.nombre_emisora : null,
+			nombre: viene( medicion, "id_plaquita" ) ? medicion.id_plaquita : null,
 
 			// el tipo de medicion, ya en texto ("CO2", "temperatura", "prueba")
 			tipo: viene( medicion, "tipo_medicion" ) ? medicion.tipo_medicion : null,

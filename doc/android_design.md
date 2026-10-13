@@ -28,7 +28,7 @@ cliente** (`LogicaFakeApp`) que actúa como **proxy** del backend.
 
 ```text
 Medicion = (
-   nombre_emisora: Text,   // "GTI-3A"
+   id_plaquita: Text,   // "GTI-3A"
    tipo_medicion:  Text,   // "CO2" | "temperatura" | "prueba"
    valor_medicion: Z       // valor del proyecto (el minor de la trama, hoy 1234)
 )
@@ -124,7 +124,7 @@ guardado); por la **regla del proxy**, la implementación llama al endpoint
 ### Configuración
 
 `AnalizadorBeacons` define el bloque `VARIABLES MODIFICABLES` con `UUID_BEACON`,
-`NOMBRE_EMISORA`, `IP_SERVIDOR`, `PUERTO_SERVIDOR`, `RUTA_GUARDAR`
+`id_plaquita`, `IP_SERVIDOR`, `PUERTO_SERVIDOR`, `RUTA_GUARDAR`
 (`src/communication/guardarMedicion.php`) y `RUTA_RECUPERAR`
 (`src/communication/recuperarMedicion.php`). Es el único punto donde se fija a dónde
 apunta la app.

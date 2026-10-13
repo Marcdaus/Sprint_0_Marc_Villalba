@@ -111,7 +111,7 @@ header( 'Content-Type: application/json' );
 if ( $resultado->ok === true ) {
 
   // guardado correcto -> 200 { "ok": true }. No hay id que devolver: la
-  // clave de la fila es la natural (nombre_emisora, fecha), que puso la BD
+  // clave de la fila es la natural (id_plaquita, fecha), que puso la BD
   http_response_code( 200 );
   echo json_encode( [ 'ok' => true ], JSON_UNESCAPED_UNICODE );
 

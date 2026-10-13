@@ -56,8 +56,8 @@ endpoint `src/communication/recuperarMedicion.php` en vez de a la base de datos.
         |
         | 1. montar la dirección con las constantes de configuracion.js
         | 2. GET (XHR) a src/communication/recuperarMedicion.php
-        |       -> { "mediciones": [ {nombre_emisora, tipo_medicion, valor_medicion, fecha} ] }
-        | 3. adaptar los campos (nombre_emisora->nombre, tipo_medicion->tipo, valor_medicion->valor)
+        |       -> { "mediciones": [ {id_plaquita, tipo_medicion, valor_medicion, fecha} ] }
+        | 3. adaptar los campos (id_plaquita->nombre, tipo_medicion->tipo, valor_medicion->valor)
         |       -> ResultadoLista( ok=true, mediciones )
         | 4. (red caída / error del servidor) -> ResultadoLista( ok=false, error )
 ```

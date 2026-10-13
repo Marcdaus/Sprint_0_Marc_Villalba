@@ -56,12 +56,12 @@ function comprobar( $condicion, $texto ) {
 // PRUEBA 1: parsearJSON() con el JSON de verdad de la app
 // ===========================================================================
 
-$jsonBueno = '{"nombre_emisora":"GTI-3A","tipo_medicion":"prueba","valor_medicion":1234}';
+$jsonBueno = '{"id_plaquita":"GTI-3A","tipo_medicion":"prueba","valor_medicion":1234}';
 
 $m = parsearJSON( $jsonBueno );
 
-comprobar( $m->nombre_emisora === 'GTI-3A',
-           "parsearJSON(): el nombre_emisora es GTI-3A" );
+comprobar( $m->id_plaquita === 'GTI-3A',
+           "parsearJSON(): el id_plaquita es GTI-3A" );
 
 comprobar( $m->tipo_medicion === 'prueba',
            "parsearJSON(): el tipo_medicion es prueba" );
@@ -96,9 +96,9 @@ comprobar( $vacia === null,
            "parsearJSON(): con un JSON que no es objeto devuelve null" );
 
 // un JSON con solo algunos campos: los que falten quedan en null
-$m = parsearJSON( '{"nombre_emisora":"GTI-3A","valor_medicion":1234}' );
+$m = parsearJSON( '{"id_plaquita":"GTI-3A","valor_medicion":1234}' );
 
-comprobar( $m->nombre_emisora === 'GTI-3A' && $m->valor_medicion === 1234,
+comprobar( $m->id_plaquita === 'GTI-3A' && $m->valor_medicion === 1234,
            "parsearJSON(): con campos sueltos lee los que hay" );
 
 comprobar( $m->tipo_medicion === null,

@@ -66,7 +66,7 @@ function parsearJSON( $cuerpo ) {
   $medicion = new stdClass();
 
   // el tipo y el nombre llegan como texto
-  $medicion->nombre_emisora = isset( $datos['nombre_emisora'] ) ? $datos['nombre_emisora'] : null;
+  $medicion->id_plaquita = isset( $datos['id_plaquita'] ) ? $datos['id_plaquita'] : null;
   $medicion->tipo_medicion  = isset( $datos['tipo_medicion'] )  ? $datos['tipo_medicion']  : null;
 
   // el numero: si llega como texto ("1234") se convierte con (int),

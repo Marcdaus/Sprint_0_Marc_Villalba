@@ -89,7 +89,7 @@ public class MedicionTest {
     public void construirJSON_mandaSoloNombreTipoYValor() {
         String json = AnalizadorBeacons.construirJSON("GTI-3A", "prueba", 1234);
 
-        assertEquals("{\"nombre_emisora\":\"GTI-3A\",\"tipo_medicion\":\"prueba\","
+        assertEquals("{\"id_plaquita\":\"GTI-3A\",\"tipo_medicion\":\"prueba\","
                 + "\"valor_medicion\":1234}", json);
     }
 
@@ -100,7 +100,7 @@ public class MedicionTest {
 
         String json = AnalizadorBeacons.construirJSON(m);
 
-        assertEquals("{\"nombre_emisora\":\"GTI-3A\",\"tipo_medicion\":\"temperatura\","
+        assertEquals("{\"id_plaquita\":\"GTI-3A\",\"tipo_medicion\":\"temperatura\","
                 + "\"valor_medicion\":17}", json);
     }
 

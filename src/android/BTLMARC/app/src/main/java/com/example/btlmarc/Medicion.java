@@ -23,7 +23,7 @@ public class Medicion {
 
     // ----- los datos guardados: los mismos campos que luego salen en el JSON -----
 
-    private String nombre;        // nombre de la emisora (nombre_emisora del JSON)
+    private String nombre;        // nombre de la emisora (id_plaquita del JSON)
     private String tipoMedicion;  // ya en texto: "CO2" | "temperatura" | "prueba"
     private int valorMedicion;    // valor del proyecto (el minor de la trama, hoy 1234)
 
@@ -55,7 +55,7 @@ public class Medicion {
     } // ()
 
     // -------------------------------------------------------------------------------
-    // Devuelve el nombre de la emisora (nombre_emisora del JSON).
+    // Devuelve el nombre de la emisora (id_plaquita del JSON).
     // -------------------------------------------------------------------------------
     /**
      * Da el nombre de la emisora.

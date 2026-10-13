@@ -55,7 +55,7 @@ servidor directamente.
 - `index.html` carga la lógica del frontend con rutas relativas
   (`../frontend_business_logic/*.js`) porque vive en `src/gui/`.
 - La tabla **no tiene columna `id`**: la clave de cada fila es la natural compuesta
-  `(nombre_emisora, fecha)`, y la web no la enseña.
+  `(id_plaquita, fecha)`, y la web no la enseña.
 - `Aplicacion.html` es **legado** del tutorial; se conserva pero no es la pantalla
   del proyecto.
 

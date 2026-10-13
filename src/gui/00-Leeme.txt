@@ -30,7 +30,7 @@ Pide la lista con consultarMediciones() y la reparte en dos tablas:
       "Ultima medida registrada";
     - todas las demas van debajo, bajo "medidas anteriores".
 
-Cada fila tiene estas cuatro columnas: Tipo, Valor, nombre_emisora y
+Cada fila tiene estas cuatro columnas: Tipo, Valor, id_plaquita y
 Fecha y Hora. La columna "Valor" pinta el valor del proyecto tal cual
 llega, sin sufijos.
 
@@ -78,7 +78,7 @@ que quitarles el "src/" de delante.
 
     construirURL.js       junta "http://" + host + ":" + puerto + "/" + ruta
 
-    adaptarMediciones.js  el servidor manda nombre_emisora, tipo_medicion,
+    adaptarMediciones.js  el servidor manda id_plaquita, tipo_medicion,
                           valor_medicion... y aquí pasan a llamarse nombre,
                           tipo y valor. La fecha se deja en texto, sin tocar.
 
@@ -104,13 +104,13 @@ El servidor manda nombres de tabla y la web usa otros. El mapa es:
 
     servidor            web
     ------------------  ----------------
-    nombre_emisora      nombre
+    id_plaquita      nombre
     tipo_medicion       tipo
     valor_medicion      valor
     fecha               fecha   (en texto, tal cual)
 
 La tabla ya NO tiene una columna "id": la clave de cada fila la forman
-nombre_emisora y fecha (la cambió el profesor). Por eso no hay fila "id"
+id_plaquita y fecha (la cambió el profesor). Por eso no hay fila "id"
 en el mapa ni en las tablas de abajo.
 
 ----------------------------------------------------------------------
@@ -123,11 +123,11 @@ medida registrada y el resto son las anteriores. El servidor manda las
 El diseño que se pidió es este:
 
     Última medida registrada
-      Tipo   | Valor | nombre_emisora | Fecha y Hora
+      Tipo   | Valor | id_plaquita | Fecha y Hora
       prueba | 1234  | GTI-3A         | 26/09/2026 12:34
 
     medidas anteriores
-      Tipo   | Valor | nombre_emisora | Fecha y Hora
+      Tipo   | Valor | id_plaquita | Fecha y Hora
       prueba | 1234  | GTI-3A         | 26/09/2026 12:34
        ...
 

@@ -55,7 +55,7 @@ Todo lo variable está al principio de `AnalizadorBeacons.java`:
 ```java
 // ====== VARIABLES MODIFICABLES ======
 public static final String UUID_BEACON     = "EPSG-GTI-MARC-3A";
-public static final String NOMBRE_EMISORA  = "GTI-3A";
+public static final String id_plaquita  = "GTI-3A";
 public static final String IP_SERVIDOR     = "192.168.1.5";   // <- la IP de tu PC
 public static final int    PUERTO_SERVIDOR = 8080;
 public static final String RUTA_GUARDAR    = "rest/guardarMedicion.php";

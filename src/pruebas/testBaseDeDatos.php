@@ -324,7 +324,7 @@ function insertarMedicion( $pdo, $valor = 1234 ) {
 
   // OJO: la columna fecha NO aparece. La pone la base de datos (RN3)
   $sql = 'INSERT INTO mediciones
-              (nombre_emisora, tipo_medicion, valor_medicion)
+              (id_plaquita, tipo_medicion, valor_medicion)
             VALUES (?, ?, ?)';
 
   $sentencia = $pdo->prepare( $sql );
@@ -338,13 +338,13 @@ function insertarMedicion( $pdo, $valor = 1234 ) {
 // SOLO PARA ESTAS PRUEBAS (la app jamas manda la fecha, RN3): sirve para
 // construir una clave primaria conocida o un orden de fechas concreto, que
 // con CURRENT_TIMESTAMP no se podria. Es la unica forma de comprobar de
-// verdad la PRIMARY KEY (nombre_emisora, fecha) y el ORDER BY.
+// verdad la PRIMARY KEY (id_plaquita, fecha) y el ORDER BY.
 // ---------------------------------------------------------------------------
 // PDO, fecha: Text, valor: Z --> insertarConFecha() -->
 function insertarConFecha( $pdo, $fecha, $valor = 1234 ) {
 
   $sql = 'INSERT INTO mediciones
-              (nombre_emisora, tipo_medicion, valor_medicion, fecha)
+              (id_plaquita, tipo_medicion, valor_medicion, fecha)
             VALUES (?, ?, ?, ?)';
 
   $sentencia = $pdo->prepare( $sql );
@@ -411,7 +411,7 @@ foreach ( $sentencia->fetchAll() as $columna ) {
 }
 
 // las cuatro columnas, en el orden del DDL
-$esperadas = [ 'nombre_emisora', 'tipo_medicion',
+$esperadas = [ 'id_plaquita', 'tipo_medicion',
                'valor_medicion', 'fecha' ];
 
 comprobar( array_keys( $columnas ) === $esperadas,
@@ -419,7 +419,7 @@ comprobar( array_keys( $columnas ) === $esperadas,
 
 // los tipos, que es donde mas fallos se cuelan
 $tipos = [
-  'nombre_emisora' => 'varchar(20)',
+  'id_plaquita' => 'varchar(20)',
   'tipo_medicion'  => 'varchar(20)',
   'valor_medicion' => 'smallint',
   'fecha'          => 'datetime',
@@ -451,7 +451,7 @@ $nulos = array_filter( $columnas, function ( $c ) {
 comprobar( count( $nulos ) === 0,
            'ninguna columna admite NULL' );
 
-// la clave primaria: compuesta, (nombre_emisora, fecha)
+// la clave primaria: compuesta, (id_plaquita, fecha)
 $sentencia = $pdo->prepare( 'SELECT COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE
                             WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
                               AND CONSTRAINT_NAME = "PRIMARY"
@@ -460,9 +460,9 @@ $sentencia->execute( [ $bdDePruebas, 'mediciones' ] );
 
 $clavePrimaria = $sentencia->fetchAll();
 
-comprobar( $clavePrimaria === [ [ 'COLUMN_NAME' => 'nombre_emisora' ],
+comprobar( $clavePrimaria === [ [ 'COLUMN_NAME' => 'id_plaquita' ],
                                 [ 'COLUMN_NAME' => 'fecha' ] ],
-           'la PRIMARY KEY es (nombre_emisora, fecha)' );
+           'la PRIMARY KEY es (id_plaquita, fecha)' );
 
 // el indice por fecha, que es el que usa el ORDER BY fecha DESC LIMIT 50
 $sentencia = $pdo->prepare( 'SELECT INDEX_NAME, COLUMN_NAME FROM information_schema.STATISTICS
@@ -485,32 +485,32 @@ comprobar( (int) $sentencia->fetchColumn() === 1,
            'el INSERT ha metido exactamente 1 fila' );
 
 // la fila hay que leerla por su clave natural, que es como la vera la web
-$sentencia = $pdo->prepare( 'SELECT nombre_emisora, tipo_medicion, valor_medicion
-                            FROM mediciones WHERE nombre_emisora = ?' );
+$sentencia = $pdo->prepare( 'SELECT id_plaquita, tipo_medicion, valor_medicion
+                            FROM mediciones WHERE id_plaquita = ?' );
 $sentencia->execute( [ $nombrePrueba ] );
 $fila = $sentencia->fetch();
 
 comprobar( $fila !== false && $fila['tipo_medicion'] === $tipoPrueba
            && (int) $fila['valor_medicion'] === (int) $valorPrueba,
-           'la fila se puede leer por su clave natural (nombre_emisora)' );
+           'la fila se puede leer por su clave natural (id_plaquita)' );
 
 
-titulo( '3b. La PRIMARY KEY compuesta (nombre_emisora, fecha)' );
+titulo( '3b. La PRIMARY KEY compuesta (id_plaquita, fecha)' );
 
 // la MISMA emisora en el MISMO instante no puede guardar dos veces
 try {
   insertarConFecha( $pdo, '2026-10-12 09:00:00' );
   insertarConFecha( $pdo, '2026-10-12 09:00:00' );
-  comprobar( false, 'repetir la misma (nombre_emisora, fecha) no salta la clave' );
+  comprobar( false, 'repetir la misma (id_plaquita, fecha) no salta la clave' );
 } catch ( PDOException $excepcion ) {
-  comprobar( true, 'repetir la misma (nombre_emisora, fecha) da error de clave duplicada' );
+  comprobar( true, 'repetir la misma (id_plaquita, fecha) da error de clave duplicada' );
 }
 
 // la misma emisora en OTRO instante si cabe
 insertarConFecha( $pdo, '2026-10-12 09:00:05' );
 
 $sentencia = $pdo->prepare( 'SELECT tipo_medicion FROM mediciones
-                            WHERE nombre_emisora = ? AND fecha = ?' );
+                            WHERE id_plaquita = ? AND fecha = ?' );
 $sentencia->execute( [ $nombrePrueba, '2026-10-12 09:00:05' ] );
 
 comprobar( $sentencia->fetch() !== false,
@@ -524,7 +524,7 @@ $antes = ahoraMySQL( $pdo );
 insertarMedicion( $pdo, $valorPrueba );
 $despues = ahoraMySQL( $pdo );
 
-$sentencia = $pdo->prepare( 'SELECT fecha FROM mediciones WHERE nombre_emisora = ?' );
+$sentencia = $pdo->prepare( 'SELECT fecha FROM mediciones WHERE id_plaquita = ?' );
 $sentencia->execute( [ $nombrePrueba ] );
 $fechaGuardada = $sentencia->fetchColumn();
 
@@ -562,7 +562,7 @@ comprobar( stripos( $columnas['fecha']['COLUMN_DEFAULT'], 'CURRENT_TIMESTAMP' ) 
 $pdo->exec( 'DELETE FROM mediciones' );
 insertarMedicion( $pdo, 235 );
 
-$sentencia = $pdo->prepare( 'SELECT fecha FROM mediciones WHERE nombre_emisora = ?' );
+$sentencia = $pdo->prepare( 'SELECT fecha FROM mediciones WHERE id_plaquita = ?' );
 $sentencia->execute( [ $nombrePrueba ] );
 
 comprobar( $sentencia->fetchColumn() !== null,
@@ -617,7 +617,7 @@ comprobar( $usaIndice,
 // el LIMIT 50: se meten 55 filas y tienen que salir 50
 $pdo->exec( 'DELETE FROM mediciones' );
 
-// 55 filas de la MISMA emisora. Como la clave es (nombre_emisora, fecha),
+// 55 filas de la MISMA emisora. Como la clave es (id_plaquita, fecha),
 // hay que dar a cada una una fecha distinta (si no, duplicarian la clave:
 // esto ES la prueba 3b). Solo en pruebas se manda la fecha a mano.
 for ( $i = 0; $i < 55; $i++ ) {

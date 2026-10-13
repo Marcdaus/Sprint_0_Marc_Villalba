@@ -75,7 +75,7 @@ const RUTA_GUARDAR   = '/src/communication/guardarMedicion.php';
 const RUTA_RECUPERAR = '/src/communication/recuperarMedicion.php';
 
 // El JSON que manda la app Android de verdad (el del prompt).
-const JSON_MEDICION = '{"nombre_emisora":"GTI-3A","tipo_medicion":"prueba",'
+const JSON_MEDICION = '{"id_plaquita":"GTI-3A","tipo_medicion":"prueba",'
                      . '"valor_medicion":1234}';
 
 // ===========================================================================
@@ -189,7 +189,7 @@ comprobar( isset( $json['ok'] ) && $json['ok'] === true,
            'la respuesta trae {"ok":true}' );
 
 comprobar( ! isset( $json['id'] ),
-           'la respuesta ya NO trae "id": la clave la forman nombre_emisora y fecha' );
+           'la respuesta ya NO trae "id": la clave la forman id_plaquita y fecha' );
 
 // ===========================================================================
 // PRUEBA 2: POST guardarMedicion con JSON malformado -> 400

@@ -43,7 +43,7 @@
 //     2. INSERTAR la medicion. El INSERT NO lleva la columna fecha: la
 //        pone la base de datos sola (RN3).
 //     3. Devolver un ResultadoGuardado ok. No hay id: la clave de la fila
-//        es la natural compuesta (nombre_emisora, fecha), y la fecha la ha
+//        es la natural compuesta (id_plaquita, fecha), y la fecha la ha
 //        generado la BD en el paso 2.
 //
 //   recuperarMedicion(f)
@@ -227,7 +227,7 @@ function limitesDeFecha( $desde, $hasta ) {
 // Es un objeto de DOMINIO, no una respuesta de red: dice si ha ido bien y,
 // si ha fallado, el motivo y de que clase es el fallo ('validacion' o
 // 'persistencia'). Aqui NO hay codigos HTTP ni JSON. Tampoco hay id: la
-// clave de la fila es la natural compuesta (nombre_emisora, fecha).
+// clave de la fila es la natural compuesta (id_plaquita, fecha).
 //
 // ok: B, error: Text?, clase: Text? --> resultadoGuardado() --> ResultadoGuardado
 // ---------------------------------------------------------------------------
@@ -272,7 +272,7 @@ function resultadoLista( $ok, $mediciones, $error, $clase ) {
 // HTTP: eso lo hace el endpoint.
 //
 // La fecha NO la pone este codigo: la pone la BD (RN3). Junto con el
-// nombre_emisora forma la clave primaria natural de la fila.
+// id_plaquita forma la clave primaria natural de la fila.
 //
 // m: Medicion --> guardarMedicion() --> ResultadoGuardado
 // ---------------------------------------------------------------------------
@@ -296,16 +296,16 @@ function guardarMedicion( $medicion ) {
     //    tres valores van con ? : nada se pega dentro del SQL.
     // ---------------------------------------------------------------
     $sql = 'INSERT INTO mediciones
-              (nombre_emisora, tipo_medicion, valor_medicion)
+              (id_plaquita, tipo_medicion, valor_medicion)
             VALUES (?, ?, ?)';
 
     $sentencia = $pdo->prepare( $sql );
-    $sentencia->execute( [ $medicion->nombre_emisora,
+    $sentencia->execute( [ $medicion->id_plaquita,
                            $medicion->tipo_medicion,
                            $medicion->valor_medicion ] );
 
     // no hay id que devolver: la clave de la fila es la natural
-    // (nombre_emisora, fecha), y la fecha la ha puesto la BD en este INSERT
+    // (id_plaquita, fecha), y la fecha la ha puesto la BD en este INSERT
     return resultadoGuardado( true, null, null );
 
   } catch ( PDOException $excepcion ) {
@@ -346,7 +346,7 @@ function recuperarMedicion( $filtro ) {
     // ---------------------------------------------------------------
     // 1. SELECT base
     // ---------------------------------------------------------------
-    $columnas = 'nombre_emisora, tipo_medicion, valor_medicion, fecha';
+    $columnas = 'id_plaquita, tipo_medicion, valor_medicion, fecha';
     $sql = 'SELECT ' . $columnas . ' FROM mediciones';
 
     $condiciones = [];
@@ -393,14 +393,14 @@ function recuperarMedicion( $filtro ) {
     $filas = $sentencia->fetchAll();
 
     // se montan una a una para dejar el valor_medicion como numero y no
-    // como texto; la clave de la fila (nombre_emisora + fecha) es de la BD
+    // como texto; la clave de la fila (id_plaquita + fecha) es de la BD
     $mediciones = [];
 
     foreach ( $filas as $fila ) {
 
       $medicion = new stdClass();
 
-      $medicion->nombre_emisora = $fila['nombre_emisora'];
+      $medicion->id_plaquita = $fila['id_plaquita'];
       $medicion->tipo_medicion  = $fila['tipo_medicion'];
       $medicion->valor_medicion = (int) $fila['valor_medicion'];
       $medicion->fecha          = $fila['fecha'];

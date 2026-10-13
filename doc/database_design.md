@@ -16,12 +16,12 @@ DESCRIPTION: Guarda cada medición (tipo y valor) que la app Android sube al ser
 
 COLUMNS:
 
-+ nombre_emisora | VARCHAR(20)  | NOT NULL |
++ id_plaquita | VARCHAR(20)  | NOT NULL |
 + tipo_medicion  | VARCHAR(20)  | NOT NULL |
 + valor_medicion | SMALLINT     | NOT NULL |
 + fecha          | DATETIME     | NOT NULL | CURRENT_TIMESTAMP
 
-PRIMARY KEY: (nombre_emisora, fecha)
+PRIMARY KEY: (id_plaquita, fecha)
 
 FOREIGN KEYS:
 
@@ -39,7 +39,7 @@ CONSTRAINTS:
 
 | Campo lógico | Tipo lógico | Tipo SQL (MySQL, vía phpMyAdmin) | Notas |
 | :--- | :--- | :--- | :--- |
-| `nombre_emisora` | `Text` | `VARCHAR(20)` | NOT NULL — "GTI-3A"; parte de la clave |
+| `id_plaquita` | `Text` | `VARCHAR(20)` | NOT NULL — "GTI-3A"; parte de la clave |
 | `tipo_medicion` | `Text` | `VARCHAR(20)` | NOT NULL — RN1: `"CO2"` \| `"temperatura"` \| `"prueba"` |
 | `valor_medicion` | `Z` | `SMALLINT` | NOT NULL — RN2: valor del proyecto (`1234`) |
 | `fecha` | `Tiempo` | `DATETIME` | NOT NULL, `DEFAULT CURRENT_TIMESTAMP` — RN3; parte de la clave |
@@ -53,11 +53,11 @@ CREATE DATABASE IF NOT EXISTS proyecto_beacon
 USE proyecto_beacon;
 
 CREATE TABLE IF NOT EXISTS mediciones (
-  nombre_emisora VARCHAR(20)  NOT NULL,
+  id_plaquita VARCHAR(20)  NOT NULL,
   tipo_medicion  VARCHAR(20)  NOT NULL,
   valor_medicion SMALLINT     NOT NULL,
   fecha          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY ( nombre_emisora, fecha ),
+  PRIMARY KEY ( id_plaquita, fecha ),
   INDEX idx_mediciones_fecha ( fecha )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS mediciones (
 - El índice `idx_mediciones_fecha` acelera el `ORDER BY fecha DESC LIMIT 50` que
   usa la web al consultar las últimas mediciones.
 - La tabla **no tiene columna `id` artificial**: la clave de cada fila es la natural
-  compuesta `(nombre_emisora, fecha)`. La app **no** envía `fecha`: la genera la base
+  compuesta `(id_plaquita, fecha)`. La app **no** envía `fecha`: la genera la base
   de datos (`DEFAULT CURRENT_TIMESTAMP`, RN3). Tampoco se guardan `uuid_beacon`,
   `major`, `minor`, `tx_power` ni `rssi`.
 - No existe tabla de usuarios: subir y consultar mediciones son operaciones

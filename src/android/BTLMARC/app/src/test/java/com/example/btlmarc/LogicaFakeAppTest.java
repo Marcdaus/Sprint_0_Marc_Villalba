@@ -66,7 +66,7 @@ public class LogicaFakeAppTest {
         assertEquals("http://" + AnalizadorBeacons.IP_SERVIDOR + ":"
                 + AnalizadorBeacons.PUERTO_SERVIDOR + "/"
                 + AnalizadorBeacons.RUTA_GUARDAR, peticion.url);
-        assertEquals("{\"nombre_emisora\":\"GTI-3A\",\"tipo_medicion\":\"prueba\","
+        assertEquals("{\"id_plaquita\":\"GTI-3A\",\"tipo_medicion\":\"prueba\","
                 + "\"valor_medicion\":1234}", peticion.cuerpo);
     }
 

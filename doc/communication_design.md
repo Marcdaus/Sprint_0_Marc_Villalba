@@ -32,8 +32,8 @@ construye la respuesta (código de estado + JSON). No contiene reglas de negocio
 
 | Método | Ruta | Entrada | Salida | Llama a |
 | :--- | :--- | :--- | :--- | :--- |
-| `POST` | `/src/communication/guardarMedicion.php` | cuerpo JSON `{ "nombre_emisora", "tipo_medicion", "valor_medicion" }` | `200` `{ "ok": true }` | `guardarMedicion()` |
-| `GET` | `/src/communication/recuperarMedicion.php` | query `?desde&hasta&tipo_medicion&valor_medicion` | `200` `{ "mediciones": [ { "nombre_emisora","tipo_medicion","valor_medicion","fecha" } ] }` | `recuperarMedicion()` |
+| `POST` | `/src/communication/guardarMedicion.php` | cuerpo JSON `{ "id_plaquita", "tipo_medicion", "valor_medicion" }` | `200` `{ "ok": true }` | `guardarMedicion()` |
+| `GET` | `/src/communication/recuperarMedicion.php` | query `?desde&hasta&tipo_medicion&valor_medicion` | `200` `{ "mediciones": [ { "id_plaquita","tipo_medicion","valor_medicion","fecha" } ] }` | `recuperarMedicion()` |
 
 ### Códigos de estado
 

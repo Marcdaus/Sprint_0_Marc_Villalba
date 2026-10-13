@@ -42,7 +42,7 @@ public class LogicaFakeApp {
     // ---------------------------------------------------------------------------------------------
     // ResultadoGuardado: lo que devuelve guardarMedicion().
     // Igual que en el backend: ok (si ok) o error + clase (si no). NO hay id:
-    // la clave de la fila la forman nombre_emisora y fecha en la base de datos.
+    // la clave de la fila la forman id_plaquita y fecha en la base de datos.
     // ---------------------------------------------------------------------------------------------
     public static class ResultadoGuardado {
 
@@ -162,7 +162,7 @@ public class LogicaFakeApp {
 
         if (codigo == 200) {
             // el servidor contesta {"ok":true} y nada mas: no hay id que leer,
-            // la clave de la fila la forma la base de datos (nombre_emisora, fecha)
+            // la clave de la fila la forma la base de datos (id_plaquita, fecha)
             return ResultadoGuardado.exito();
         }
 

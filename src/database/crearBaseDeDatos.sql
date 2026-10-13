@@ -55,7 +55,7 @@ USE proyecto_beacon;
 -- ---------------------------------------------------------------------------
 -- La tabla mediciones: una fila por cada beacon recibido.
 --
--- La clave es NATURAL y COMPUESTA ( nombre_emisora, fecha ): NO hay columna id
+-- La clave es NATURAL y COMPUESTA ( id_plaquita, fecha ): NO hay columna id
 -- artificial. Una medicion se identifica por QUIEN la hizo y CUANDO. Consecuencia:
 -- la misma emisora no puede guardar DOS mediciones dentro del mismo segundo
 -- (se duplicaria la clave primaria); el movil emite cada 5 s, asi que no llega
@@ -63,11 +63,11 @@ USE proyecto_beacon;
 -- pone la BD sola (RN3).
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS mediciones (
-  nombre_emisora VARCHAR(20)       NOT NULL,   -- "GTI-3A"
+  id_plaquita VARCHAR(20)       NOT NULL,   -- "GTI-3A"
   tipo_medicion  VARCHAR(20)       NOT NULL,   -- RN1: "CO2" | "temperatura" | "prueba"
   valor_medicion SMALLINT          NOT NULL,   -- RN2: valor del proyecto (hoy 1234; modificable)
   fecha          DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,   -- RN3: la pone la BD, no la app ni el servidor
-  PRIMARY KEY ( nombre_emisora, fecha ),
+  PRIMARY KEY ( id_plaquita, fecha ),
   INDEX idx_mediciones_fecha ( fecha )   -- para el ORDER BY fecha DESC LIMIT 50
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS mediciones (
 -- TRES MEDICIONES DE EJEMPLO, para que la web tenga algo que ensenar antes
 -- de que llegue el movil. Los tres valores salen de las variables de arriba.
 --
--- OJO, ahora que la clave es ( nombre_emisora, fecha ): la misma emisora NO
+-- OJO, ahora que la clave es ( id_plaquita, fecha ): la misma emisora NO
 -- puede guardar dos mediciones dentro del MISMO segundo (se duplicaria la
 -- clave primaria). Las tres filas de ejemplo son del mismo emisora y el
 -- script se importa entero en un instante, asi que estas tres llevan fecha a
@@ -86,11 +86,11 @@ CREATE TABLE IF NOT EXISTS mediciones (
 -- CURRENT_TIMESTAMP (RN3). Si alguien anade aqui una fecha para el movil,
 -- dejaria de mandar la fecha, que es justo lo que no tiene que pasar.
 -- ---------------------------------------------------------------------------
-INSERT INTO mediciones (nombre_emisora, tipo_medicion, valor_medicion, fecha)
+INSERT INTO mediciones (id_plaquita, tipo_medicion, valor_medicion, fecha)
 VALUES (@nombreEjemplo, @tipoEjemplo, @valorEjemplo, '2026-10-12 09:00:00');
 
-INSERT INTO mediciones (nombre_emisora, tipo_medicion, valor_medicion, fecha)
+INSERT INTO mediciones (id_plaquita, tipo_medicion, valor_medicion, fecha)
 VALUES (@nombreEjemplo, @tipoEjemplo, @valorEjemplo, '2026-10-12 09:00:05');
 
-INSERT INTO mediciones (nombre_emisora, tipo_medicion, valor_medicion, fecha)
+INSERT INTO mediciones (id_plaquita, tipo_medicion, valor_medicion, fecha)
 VALUES (@nombreEjemplo, @tipoEjemplo, @valorEjemplo, '2026-10-12 09:00:10');

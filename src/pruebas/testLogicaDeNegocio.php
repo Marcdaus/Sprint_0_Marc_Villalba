@@ -190,7 +190,7 @@ function ponerPDOFalso() {
 function medicionDePrueba( $campo = null, $valor = null ) {
 
   $m = new stdClass();
-  $m->nombre_emisora = 'GTI-3A';
+  $m->id_plaquita = 'GTI-3A';
   $m->tipo_medicion  = 'prueba';
   $m->valor_medicion = 1234;
 
@@ -352,7 +352,7 @@ $falso = ponerPDOFalso();
 $r = guardarMedicion( medicionDePrueba() );
 
 comprobar( $r->ok === true, 'la operacion correcta devuelve ok' );
-comprobar( ! isset( $r->id ), 'la respuesta NO trae id: la clave de la fila es (nombre_emisora, fecha)' );
+comprobar( ! isset( $r->id ), 'la respuesta NO trae id: la clave de la fila es (id_plaquita, fecha)' );
 
 // ademas, ya no se le pide al PDO el ultimo id: el objeto ni lo usa
 comprobar( $falso->numeroDeSentencias() === 1
@@ -372,7 +372,7 @@ titulo( 'recuperarMedicion: sin filtros, se devuelven todas' );
 
 $falso = ponerPDOFalso();
 $falso->filas = [
-  [ 'nombre_emisora' => 'GTI-3A', 'tipo_medicion' => 'prueba',
+  [ 'id_plaquita' => 'GTI-3A', 'tipo_medicion' => 'prueba',
     'valor_medicion' => '1234', 'fecha' => '2026-09-29 10:15:00' ]
 ];
 
@@ -410,12 +410,12 @@ comprobar( $medicion->tipo_medicion === 'prueba',
 comprobar( $medicion->fecha === '2026-09-29 10:15:00',
            'la fecha viene de la BD, tal cual' );
 
-comprobar( isset( $medicion->nombre_emisora ) && isset( $medicion->tipo_medicion )
+comprobar( isset( $medicion->id_plaquita ) && isset( $medicion->tipo_medicion )
            && isset( $medicion->valor_medicion ) && isset( $medicion->fecha ),
            'la medicion trae los cuatro campos de la tabla' );
 
 comprobar( ! isset( $medicion->id ),
-           'la medicion NO trae id: su clave es (nombre_emisora, fecha)' );
+           'la medicion NO trae id: su clave es (id_plaquita, fecha)' );
 
 
 titulo( 'recuperarMedicion: con un solo filtro, solo ese filtro' );

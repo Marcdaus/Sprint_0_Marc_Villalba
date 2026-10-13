@@ -344,7 +344,7 @@ public class ServicioEscuharBeacons  extends IntentService {
         }
 
         if (nombre == null || nombre.isEmpty()) {
-            nombre = AnalizadorBeacons.NOMBRE_EMISORA; // si no hay nombre, pongo el del proyecto
+            nombre = AnalizadorBeacons.ID_PLAQUITA; // si no hay nombre, pongo el del proyecto
         }
 
         // 2. leer la trama
@@ -362,7 +362,7 @@ public class ServicioEscuharBeacons  extends IntentService {
 
         // 4. volcar la trama al log y avisar a la pantalla (hook del PROMPT 8)
         AnalizadorBeacons.mostrarTrama(tib);
-        this.mostrarEnPantalla(AnalizadorBeacons.NOMBRE_EMISORA
+        this.mostrarEnPantalla(AnalizadorBeacons.ID_PLAQUITA
                 + " | tipo=" + AnalizadorBeacons.tipoDeMedicion(tib)
                 + " | valor=" + AnalizadorBeacons.interpretarValor(tib)
                 + " | rssi=" + resultado.getRssi());

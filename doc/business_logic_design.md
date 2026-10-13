@@ -12,7 +12,7 @@
 
 ```text
 Medicion = (
-   nombre_emisora: Text,    // nombre que emite la plaquita: "GTI-3A"
+   id_plaquita: Text,    // nombre que emite la plaquita: "GTI-3A"
    tipo_medicion:  Text,    // "CO2" | "temperatura" | "prueba"
    valor_medicion: Z,       // valor del proyecto (hoy 1234)
    fecha:          Tiempo   // la pone la base de datos (RN3); en la entrada puede ir vacía
@@ -75,7 +75,7 @@ m: Medicion --> guardarMedicion() --> ResultadoGuardado
                 | 1. validar m: RN1 (tipo conocido) y RN2 (valor entero)
                 |        ? inválido -> ResultadoGuardado( ok=false, clase='validacion', error )
                 |
-                | 2. INSERT INTO mediciones (nombre_emisora, tipo_medicion, valor_medicion)
+                | 2. INSERT INTO mediciones (id_plaquita, tipo_medicion, valor_medicion)
                 |        -> la BD rellena fecha (RN3)
                 |
                 | 3. -> ResultadoGuardado( ok=true )
@@ -83,7 +83,7 @@ m: Medicion --> guardarMedicion() --> ResultadoGuardado
 
 f: FiltroMediciones --> recuperarMedicion() --> ResultadoLista
                 |
-                | 1. SELECT nombre_emisora, tipo_medicion, valor_medicion, fecha
+                | 1. SELECT id_plaquita, tipo_medicion, valor_medicion, fecha
                 |        FROM mediciones
                 |        WHERE <filtros opcionales>
                 |        ORDER BY fecha DESC LIMIT 50
@@ -99,12 +99,12 @@ exactamente a `database_design.md` (tabla `mediciones`):
 
 ```text
 guardarMedicion( m: Medicion )
-   = INSERT INTO mediciones (nombre_emisora, tipo_medicion, valor_medicion)
-     VALUES ( m.nombre_emisora, m.tipo_medicion, m.valor_medicion )
+   = INSERT INTO mediciones (id_plaquita, tipo_medicion, valor_medicion)
+     VALUES ( m.id_plaquita, m.tipo_medicion, m.valor_medicion )
      -> ok                                // sin fecha: la pone la BD (RN3)
 
 recuperarMedicion( f: FiltroMediciones )
-   = SELECT nombre_emisora, tipo_medicion, valor_medicion, fecha
+   = SELECT id_plaquita, tipo_medicion, valor_medicion, fecha
      FROM mediciones
      WHERE f.desde? / f.hasta? / f.tipo_medicion? / f.valor_medicion?
      ORDER BY fecha DESC LIMIT 50
@@ -118,7 +118,7 @@ recuperarMedicion( f: FiltroMediciones )
   implementación, no forman parte del contrato.
 - El **resultado se expresa siempre con tipos de dominio** (`ok`,
   `mediciones`, `error`, `clase`). No hay `id`: la clave de la fila guardada es la
-  natural compuesta `(nombre_emisora, fecha)`.
+  natural compuesta `(id_plaquita, fecha)`.
 - `clase` distingue el **tipo de fallo** (`'validacion'` o `'persistencia'`), que es
   un concepto de dominio puro (datos inválidos frente a fallo al persistir).
 - La regla RN2 no fija un valor concreto: `valor_medicion` es el dato que manda el
