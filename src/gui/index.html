@@ -3,6 +3,7 @@
      Proyecto: Sprint_0_Marc_Villalba
      Lenguaje: HTML
      Curso: 3ºGTI
+     Fecha: 13/10/2026
      ===================================== -->
 
 <!DOCTYPE html>
@@ -16,7 +17,7 @@
 <!-- <style> que esta marcado como "AQUI VA EL CSS".                        -->
 <!--                                                                          -->
 <!-- Los datos NO salen de aqui: los pide frontend_business_logic/consultarMediciones.js -->
-<!-- al servidor y llegan ya adaptados (id, nombre, tipo, valor, fecha...).   -->
+<!-- al servidor y llegan ya adaptados (nombre, tipo, valor, fecha...).   -->
 <!-- Si la lista de mediciones esta vacia, sale un texto en vez de tablas.  -->
 <!-- ====================================================================== -->
 <html lang="es">
@@ -90,9 +91,9 @@ function celda( valor ) {
 }
 
 // ----------------------------------------------------------------------
-// Crea una fila con los cinco datos del diseño y la mete en la tabla.
+// Crea una fila con los cuatro datos del diseño y la mete en la tabla.
 // El orden de las celdas es el orden de las columnas del <thead>:
-//   id, tipo, valor, nombre_emisora, fecha.
+//   tipo, valor, nombre_emisora, fecha.
 //
 // Si algún dato no viene, celda() deja la celda vacía.
 //
@@ -102,7 +103,6 @@ function pintarFila( cuerpo, medicion ) {
 
   const fila = document.createElement( "tr" );
 
-  fila.appendChild( celda( medicion.id ) );
   fila.appendChild( celda( medicion.tipo ) );
   fila.appendChild( celda( medicion.valor ) );
   fila.appendChild( celda( medicion.nombre ) );
@@ -200,7 +200,6 @@ document.addEventListener( "DOMContentLoaded", iniciar );
 <table class="tabla tabla--ultima">
   <thead>
     <tr>
-      <th>id</th>
       <th>Tipo</th>
       <th>Valor</th>
       <th>nombre_emisora</th>
@@ -223,7 +222,6 @@ document.addEventListener( "DOMContentLoaded", iniciar );
 <table class="tabla tabla--anteriores">
   <thead>
     <tr>
-      <th>id</th>
       <th>Tipo</th>
       <th>Valor</th>
       <th>nombre_emisora</th>

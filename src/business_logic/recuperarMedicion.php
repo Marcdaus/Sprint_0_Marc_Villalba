@@ -4,19 +4,20 @@
 // Proyecto: Sprint_0_Marc_Villalba
 // Lenguaje: PHP
 // Curso: 3ºGTI
+// Fecha: 13/10/2026
 // =====================================
 
 
 // ===========================================================================
 // recuperarMedicion.php  --  PROMPT 4
 //
-// QUE ES ESTO: un puntero, nada mas. Igual que logica/guardarMedicion.php,
-// y por el mismo motivo.
+// QUE ES ESTO: un puntero, nada mas. Igual que
+// src/business_logic/guardarMedicion.php, y por el mismo motivo.
 //
-// El endpoint rest/recuperarMedicion.php (PROMPT 3) busca la logica de
-// negocio en logica/recuperarMedicion.php, y este fichero carga el de
-// verdad, logica/LogicaDeNegocio.php, que es donde estan las dos funciones
-// publicas: guardarMedicion() y recuperarMedicion().
+// El endpoint src/communication/recuperarMedicion.php (PROMPT 3) carga la
+// logica de negocio desde src/business_logic/recuperarMedicion.php, y este
+// fichero carga el de verdad, LogicaDeNegocio.php, que es donde estan las
+// dos funciones publicas: guardarMedicion() y recuperarMedicion().
 //
 // Los endpoints no se tocan.
 //

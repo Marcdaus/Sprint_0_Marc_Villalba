@@ -4,6 +4,7 @@
 // Proyecto: Sprint_0_Marc_Villalba
 // Lenguaje: PHP
 // Curso: 3ºGTI
+// Fecha: 13/10/2026
 // =====================================
 
 
@@ -15,11 +16,10 @@
 // testAuxiliaresRest.php), sino lo que ve el cliente: el codigo HTTP y el
 // JSON de la respuesta.
 //
-// Estas pruebas usan el STUB de logica/guardarMedicion.php y
-// logica/recuperarMedicion.php, que todavia no existen, asi que los
-// endpoints cargan el stub de pruebas/stubLogicaDeNegocio.php. Con el
-// PROMPT 4 puesto, cargaran la logica de verdad y estas pruebas habran que
-// cambiar: los valores esperados ya no seran los del stub.
+// Estas pruebas usan la logica de negocio DE VERDAD (business_logic/), asi
+// que necesitan MySQL encendido y la tabla mediciones (PROMPT 5). Los
+// valores esperados (tipo "prueba", valor 1234) son los de las filas de
+// ejemplo del DDL; si se borran esas filas, hay que ajustar las comparaciones.
 //
 // COMO EJECUTARLAS:
 //
@@ -39,15 +39,13 @@
 // ###########################################################################
 // #  ESTAS PRUEBAS AHORA NECESITAN LA BASE DE DATOS.                        #
 // #                                                                          #
-// # Antes (PROMPT 3) los endpoints usaban el stub de pruebas/, que           #
-// # devolvia datos fijos y no necesitaba MySQL. Desde el PROMPT 4 los        #
-// # endpoints usan la logica de negocio DE VERDAD, que hace un INSERT y      #
-// # un SELECT contra la tabla mediciones: sin la base de datos proyecto_beacon #
-// # (PROMPT 5) y sin MySQL encendido, responden 500 y estas pruebas fallan.  #
-// #                                                                          #
-// # Ademas, los valores que espera este fichero son los del stub (id 42, dos  #
-// # mediciones fijas), y la logica de verdad genera ids y filas de verdad,     #
-// # asi que hay que reescribir las comparaciones de aqui abajo.               #
+// # Los endpoints usan la logica de negocio DE VERDAD (business_logic/),
+// # que hace un INSERT y un SELECT contra la tabla mediciones: sin la base
+// # proyecto_beacon (PROMPT 5) y sin MySQL encendido, responden 500 y estas
+// # pruebas fallan.
+// #
+// # Los valores esperados (tipo "prueba", valor 1234) son los de las filas
+// # de ejemplo del DDL; si se borran esas filas, ajusta las comparaciones.
 // #                                                                          #
 // # Para probar los endpoints AHORA MISMO, sin base de datos, hay que        #
 // # probar la logica: pruebas/testLogicaDeNegocio.php, que no necesita nada  #
@@ -190,8 +188,8 @@ comprobar( is_array( $json ),
 comprobar( isset( $json['ok'] ) && $json['ok'] === true,
            'la respuesta trae {"ok":true}' );
 
-comprobar( isset( $json['id'] ),
-           'la respuesta trae el "id" de la medicion guardada' );
+comprobar( ! isset( $json['id'] ),
+           'la respuesta ya NO trae "id": la clave la forman nombre_emisora y fecha' );
 
 // ===========================================================================
 // PRUEBA 2: POST guardarMedicion con JSON malformado -> 400
@@ -242,9 +240,9 @@ comprobar( isset( $json['mediciones'] ) && is_array( $json['mediciones'] ),
            'la respuesta del GET trae "mediciones" y es una lista' );
 
 comprobar( count( $json['mediciones'] ?? [] ) > 0,
-           'la lista de mediciones no viene vacia (el stub devuelve dos)' );
+           'la lista de mediciones no viene vacia' );
 
-// la primera medicion del stub, con el tipo y el valor del proyecto
+// la primera medicion de las de ejemplo, con el tipo y el valor del proyecto
 $primera = $json['mediciones'][0] ?? null;
 
 comprobar( $primera !== null && $primera['tipo_medicion'] === 'prueba',
@@ -256,10 +254,9 @@ comprobar( $primera !== null && $primera['valor_medicion'] === 1234,
 // ===========================================================================
 // PRUEBA 5: GET recuperarMedicion con filtros -> 200
 //
-// El stub no filtra (eso es del PROMPT 4), asi que aqui solo se comprueba
+// La logica de negocio SI filtra (PROMPT 4), pero aqui solo se comprueba
 // que mandar filtros NO rompe el endpoint: sigue contestando 200 y con
-// mediciones. Cuando la logica de verdad este, estas dos pruebas hay que
-// reescribir para comprobar que el filtro se aplica de verdad.
+// mediciones.
 // ===========================================================================
 
 $r = peticion( 'GET', RUTA_RECUPERAR . '?desde=2026-09-01&valor_medicion=1234' );

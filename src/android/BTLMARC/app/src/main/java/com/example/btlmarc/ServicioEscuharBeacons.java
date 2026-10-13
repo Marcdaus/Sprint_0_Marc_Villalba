@@ -3,6 +3,7 @@
 // Proyecto: Sprint_0_Marc_Villalba
 // Lenguaje: Java
 // Curso: 3ºGTI
+// Fecha: 13/10/2026
 // =====================================
 
 
@@ -20,8 +21,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-// AnalizadorBeacons, Medicion, TramaIBeacon y PeticionarioREST estan en este mismo
-// paquete (com.example.btlmarc), asi que aqui no hace falta importar nada de ellas.
+// AnalizadorBeacons, Medicion, TramaIBeacon, LogicaFakeApp y PeticionarioREST estan en este
+// mismo paquete (com.example.btlmarc), asi que aqui no hace falta importar nada de ellas.
 
 import java.util.List;
 
@@ -34,9 +35,6 @@ public class ServicioEscuharBeacons  extends IntentService {
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
     private static final String ETIQUETA_LOG = ">>>>";
-
-    // Metodo HTTP que se usa para mandar la medicion
-    private static final String METODO_POST = "POST";
 
     // ---------------------------------------------------------------------------------------------
     // HOOK DE PANTALLA (para el PROMPT 8, que hara la UX).
@@ -65,18 +63,28 @@ public class ServicioEscuharBeacons  extends IntentService {
     } // ()
 
     // ---------------------------------------------------------------------------------------------
-    // (new) el cliente REST que se manda el POST
+    // (new) por aqui llega el resultado de guardar la medicion (la logica fake del telefono).
     // ---------------------------------------------------------------------------------------------
-    private final PeticionarioREST.RespuestaREST respuestaDelPOST = new PeticionarioREST.RespuestaREST() {
+    private final LogicaFakeApp.RespuestaApp respuestaDelGuardado = new LogicaFakeApp.RespuestaApp() {
         @Override
-        // codigo: Z, cuerpo: Text --> callback() -->
-        public void callback(int codigo, String cuerpo) {
-            // esta respuesta solo llega si se ha postureado una medicion NUESTRA,
+        // resultado: ResultadoGuardado --> onResultado() -->
+        public void onResultado(LogicaFakeApp.ResultadoGuardado resultado) {
+            // esta respuesta solo llega si se ha enviado una medicion NUESTRA,
             // asi que va con la etiqueta "tramaMarc" (lo de nuestro beacon)
-            Log.d(AnalizadorBeacons.ETIQUETA_TRAMA_MARC, "respuesta del servidor: codigo=" + codigo
-                    + " cuerpo=" + cuerpo);
+            if (resultado.ok) {
+                Log.d(AnalizadorBeacons.ETIQUETA_TRAMA_MARC, "medicion guardada: ok");
+            } else {
+                Log.d(AnalizadorBeacons.ETIQUETA_TRAMA_MARC, "no se ha podido guardar ("
+                        + resultado.clase + "): " + resultado.error);
+            }
         }
     };
+
+    // ---------------------------------------------------------------------------------------------
+    // La logica fake del telefono: monta el JSON, la URL y hace el POST. El servicio no sabe
+    // de nada de eso, solo le pasa la Medicion.
+    // ---------------------------------------------------------------------------------------------
+    private LogicaFakeApp logicaFakeApp = null;
 
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
@@ -362,33 +370,24 @@ public class ServicioEscuharBeacons  extends IntentService {
         // 5. montar la medicion (el tipo y el valor salen de la trama)
         Medicion m = new Medicion(tib, nombre);
 
-        // 6. el cuerpo del POST
-        String cuerpo = AnalizadorBeacons.construirJSON(m);
-
-        // 6.1. el JSON tambien al log, con la etiqueta "trama", para verlo y copiarlo
-        AnalizadorBeacons.mostrarJSON(cuerpo);
-
-        // 7. la URL del servidor
-        String url = AnalizadorBeacons.construirURL(
-                AnalizadorBeacons.IP_SERVIDOR,
-                AnalizadorBeacons.PUERTO_SERVIDOR,
-                AnalizadorBeacons.RUTA_GUARDAR);
-
-        // 8. limitar la frecuencia: si aun no ha pasado MS_ENTRE_MEDICIONES desde el
-        //    ultimo envio, esta lectura NO se manda (los pasos 4-6 ya salieron: la
-        //    trama y el JSON siguen en el log). Asi se evita el monton de POST de golpe.
+        // 6. limitar la frecuencia: si aun no ha pasado MS_ENTRE_MEDICIONES desde el
+        //    ultimo envio, esta lectura NO se manda. Asi se evita el monton de POST
+        //    de golpe (la plaquita emite 1 s cada 5 s y en esa ventana llegan muchos
+        //    paquetes del mismo beacon).
         long ahora = System.currentTimeMillis();
         if (!AnalizadorBeacons.debeEnviarMedicion(ahora, this.instanteUltimoEnvio)) {
             return;
         }
         this.instanteUltimoEnvio = ahora;
 
-        Log.d(AnalizadorBeacons.ETIQUETA_TRAMA_MARC, "POST " + url + " cuerpo=" + cuerpo);
-
-        // 9. mandar el POST.
-        // Ojo: PeticionarioREST es un AsyncTask y execute() pide el hilo principal.
-        // onScanResult ya llega al hilo principal, asi que aqui se puede llamar tranquilo.
-        this.crearPeticionarioREST().hacerPeticionREST(METODO_POST, url, cuerpo, this.respuestaDelPOST);
+        // 7. guardar la medicion con la logica fake del telefono (LogicaFakeApp).
+        //    El proxy monta el JSON, la URL y hace el POST; aqui no se sabe de nada de eso.
+        //    Ojo: PeticionarioREST es un AsyncTask y execute() pide el hilo principal;
+        //    onScanResult ya llega al hilo principal, asi que aqui se puede llamar tranquilo.
+        if (this.logicaFakeApp == null) {
+            this.logicaFakeApp = this.crearLogicaApp();
+        }
+        this.logicaFakeApp.guardarMedicion(m, this.respuestaDelGuardado);
 
     } // ()
 
@@ -415,14 +414,14 @@ public class ServicioEscuharBeacons  extends IntentService {
     // ---------------------------------------------------------------------------------------------
     // (new) ------------------------------------------------------------------------------------
     /**
-     * Crea el cliente REST. Existe como metodo aparte para que las pruebas automáticas
-     * puedan meter uno falso (mock) y comprobar el POST sin tocar la red.
+     * Crea la logica fake del telefono. Existe como metodo aparte para que las pruebas
+     * automaticas puedan meter una falsa (mock) y comprobar el guardado sin tocar la red.
      *
-     * @return un cliente REST listo para hacer peticiones
+     * @return la logica de cliente lista para guardar mediciones
      */
-    // --> crearPeticionarioREST() --> PeticionarioREST
-    protected PeticionarioREST crearPeticionarioREST() {
-        return new PeticionarioREST();
+    // --> crearLogicaApp() --> LogicaFakeApp
+    protected LogicaFakeApp crearLogicaApp() {
+        return new LogicaFakeApp();
     } // ()
 
     // ---------------------------------------------------------------------------------------------

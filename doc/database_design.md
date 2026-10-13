@@ -16,13 +16,12 @@ DESCRIPTION: Guarda cada medición (tipo y valor) que la app Android sube al ser
 
 COLUMNS:
 
-+ id             | INT UNSIGNED | NOT NULL | Auto-Increment
 + nombre_emisora | VARCHAR(20)  | NOT NULL |
 + tipo_medicion  | VARCHAR(20)  | NOT NULL |
 + valor_medicion | SMALLINT     | NOT NULL |
 + fecha          | DATETIME     | NOT NULL | CURRENT_TIMESTAMP
 
-PRIMARY KEY: id
+PRIMARY KEY: (nombre_emisora, fecha)
 
 FOREIGN KEYS:
 
@@ -40,11 +39,10 @@ CONSTRAINTS:
 
 | Campo lógico | Tipo lógico | Tipo SQL (MySQL, vía phpMyAdmin) | Notas |
 | :--- | :--- | :--- | :--- |
-| `id` | `N` | `INT UNSIGNED AUTO_INCREMENT` | clave primaria |
-| `nombre_emisora` | `Text` | `VARCHAR(20)` | NOT NULL — "GTI-3A" |
+| `nombre_emisora` | `Text` | `VARCHAR(20)` | NOT NULL — "GTI-3A"; parte de la clave |
 | `tipo_medicion` | `Text` | `VARCHAR(20)` | NOT NULL — RN1: `"CO2"` \| `"temperatura"` \| `"prueba"` |
 | `valor_medicion` | `Z` | `SMALLINT` | NOT NULL — RN2: valor del proyecto (`1234`) |
-| `fecha` | `Tiempo` | `DATETIME` | NOT NULL, `DEFAULT CURRENT_TIMESTAMP` — RN3 |
+| `fecha` | `Tiempo` | `DATETIME` | NOT NULL, `DEFAULT CURRENT_TIMESTAMP` — RN3; parte de la clave |
 
 ### DDL
 
@@ -55,12 +53,11 @@ CREATE DATABASE IF NOT EXISTS proyecto_beacon
 USE proyecto_beacon;
 
 CREATE TABLE IF NOT EXISTS mediciones (
-  id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
   nombre_emisora VARCHAR(20)  NOT NULL,
   tipo_medicion  VARCHAR(20)  NOT NULL,
   valor_medicion SMALLINT     NOT NULL,
   fecha          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY ( id ),
+  PRIMARY KEY ( nombre_emisora, fecha ),
   INDEX idx_mediciones_fecha ( fecha )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
@@ -74,8 +71,10 @@ CREATE TABLE IF NOT EXISTS mediciones (
   16 bits con signo.
 - El índice `idx_mediciones_fecha` acelera el `ORDER BY fecha DESC LIMIT 50` que
   usa la web al consultar las últimas mediciones.
-- La app **no** envía `id` ni `fecha`: los genera la base de datos. Tampoco se
-  guardan `uuid_beacon`, `major`, `minor`, `tx_power` ni `rssi`.
+- La tabla **no tiene columna `id` artificial**: la clave de cada fila es la natural
+  compuesta `(nombre_emisora, fecha)`. La app **no** envía `fecha`: la genera la base
+  de datos (`DEFAULT CURRENT_TIMESTAMP`, RN3). Tampoco se guardan `uuid_beacon`,
+  `major`, `minor`, `tx_power` ni `rssi`.
 - No existe tabla de usuarios: subir y consultar mediciones son operaciones
   públicas (regla de negocio RN4).
 

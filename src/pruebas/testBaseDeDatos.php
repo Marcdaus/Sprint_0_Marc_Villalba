@@ -4,6 +4,7 @@
 // Proyecto: Sprint_0_Marc_Villalba
 // Lenguaje: PHP
 // Curso: 3ºGTI
+// Fecha: 13/10/2026
 // =====================================
 
 
@@ -318,7 +319,7 @@ function tipoNormalizado( $tipo ) {
 // ---------------------------------------------------------------------------
 // insertarMedicion() : mete una medicion SIN la columna fecha (RN3)
 // ---------------------------------------------------------------------------
-// PDO --> insertarMedicion() --> id: Z
+// PDO, valor: Z --> insertarMedicion() -->
 function insertarMedicion( $pdo, $valor = 1234 ) {
 
   // OJO: la columna fecha NO aparece. La pone la base de datos (RN3)
@@ -329,7 +330,25 @@ function insertarMedicion( $pdo, $valor = 1234 ) {
   $sentencia = $pdo->prepare( $sql );
   $sentencia->execute( [ $GLOBALS['nombrePrueba'], $GLOBALS['tipoPrueba'], $valor ] );
 
-  return (int) $pdo->lastInsertId();
+} // ()
+
+// ---------------------------------------------------------------------------
+// insertarConFecha() : mete una medicion CON fecha a mano
+//
+// SOLO PARA ESTAS PRUEBAS (la app jamas manda la fecha, RN3): sirve para
+// construir una clave primaria conocida o un orden de fechas concreto, que
+// con CURRENT_TIMESTAMP no se podria. Es la unica forma de comprobar de
+// verdad la PRIMARY KEY (nombre_emisora, fecha) y el ORDER BY.
+// ---------------------------------------------------------------------------
+// PDO, fecha: Text, valor: Z --> insertarConFecha() -->
+function insertarConFecha( $pdo, $fecha, $valor = 1234 ) {
+
+  $sql = 'INSERT INTO mediciones
+              (nombre_emisora, tipo_medicion, valor_medicion, fecha)
+            VALUES (?, ?, ?, ?)';
+
+  $sentencia = $pdo->prepare( $sql );
+  $sentencia->execute( [ $GLOBALS['nombrePrueba'], $GLOBALS['tipoPrueba'], $valor, $fecha ] );
 
 } // ()
 
@@ -391,16 +410,15 @@ foreach ( $sentencia->fetchAll() as $columna ) {
   $columnas[ $columna['COLUMN_NAME'] ] = $columna;
 }
 
-// las cinco columnas, en el orden del DDL
-$esperadas = [ 'id', 'nombre_emisora', 'tipo_medicion',
+// las cuatro columnas, en el orden del DDL
+$esperadas = [ 'nombre_emisora', 'tipo_medicion',
                'valor_medicion', 'fecha' ];
 
 comprobar( array_keys( $columnas ) === $esperadas,
-           'las 5 columnas estan, y en el orden del DDL' );
+           'las 4 columnas estan, y en el orden del DDL' );
 
 // los tipos, que es donde mas fallos se cuelan
 $tipos = [
-  'id'             => 'int unsigned',
   'nombre_emisora' => 'varchar(20)',
   'tipo_medicion'  => 'varchar(20)',
   'valor_medicion' => 'smallint',
@@ -416,10 +434,9 @@ foreach ( $tipos as $nombre => $tipo ) {
 
 }
 
-// id: autoincremental y sin permitir nulos
-comprobar( isset( $columnas['id']['EXTRA'] )
-           && stripos( $columnas['id']['EXTRA'], 'auto_increment' ) !== false,
-           'la columna id es AUTO_INCREMENT' );
+// NO debe existir una columna id artificial: la clave es la natural
+comprobar( ! isset( $columnas['id'] ),
+           'NO existe una columna id: la clave es la natural compuesta' );
 
 // RN3: la fecha por defecto la tiene que poner MySQL
 comprobar( isset( $columnas['fecha']['COLUMN_DEFAULT'] )
@@ -434,14 +451,18 @@ $nulos = array_filter( $columnas, function ( $c ) {
 comprobar( count( $nulos ) === 0,
            'ninguna columna admite NULL' );
 
-// la clave primaria
+// la clave primaria: compuesta, (nombre_emisora, fecha)
 $sentencia = $pdo->prepare( 'SELECT COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE
                             WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
-                              AND CONSTRAINT_NAME = "PRIMARY"' );
+                              AND CONSTRAINT_NAME = "PRIMARY"
+                            ORDER BY ORDINAL_POSITION' );
 $sentencia->execute( [ $bdDePruebas, 'mediciones' ] );
 
-comprobar( $sentencia->fetchColumn() === 'id',
-           'la PRIMARY KEY es la columna id' );
+$clavePrimaria = $sentencia->fetchAll();
+
+comprobar( $clavePrimaria === [ [ 'COLUMN_NAME' => 'nombre_emisora' ],
+                                [ 'COLUMN_NAME' => 'fecha' ] ],
+           'la PRIMARY KEY es (nombre_emisora, fecha)' );
 
 // el indice por fecha, que es el que usa el ORDER BY fecha DESC LIMIT 50
 $sentencia = $pdo->prepare( 'SELECT INDEX_NAME, COLUMN_NAME FROM information_schema.STATISTICS
@@ -456,33 +477,55 @@ comprobar( $indiceFecha !== false && $indiceFecha['COLUMN_NAME'] === 'fecha',
 
 titulo( '3. INSERT valido, sin la columna fecha' );
 
-$antes = ahoraMySQL( $pdo );
-$id = insertarMedicion( $pdo, $valorPrueba );
-$despues = ahoraMySQL( $pdo );
-
-comprobar( $id > 0, 'el INSERT devuelve un id (el ' . $id . ')' );
+insertarMedicion( $pdo, $valorPrueba );
 
 $sentencia = $pdo->query( 'SELECT COUNT(*) FROM mediciones' );
 
 comprobar( (int) $sentencia->fetchColumn() === 1,
            'el INSERT ha metido exactamente 1 fila' );
 
-// el id tiene que crecer solo: mete otra y tiene que ser mayor
-$id2 = insertarMedicion( $pdo, 235 );
+// la fila hay que leerla por su clave natural, que es como la vera la web
+$sentencia = $pdo->prepare( 'SELECT nombre_emisora, tipo_medicion, valor_medicion
+                            FROM mediciones WHERE nombre_emisora = ?' );
+$sentencia->execute( [ $nombrePrueba ] );
+$fila = $sentencia->fetch();
 
-comprobar( $id2 > $id, 'el id se incrementa solo (de ' . $id . ' a ' . $id2 . ')' );
+comprobar( $fila !== false && $fila['tipo_medicion'] === $tipoPrueba
+           && (int) $fila['valor_medicion'] === (int) $valorPrueba,
+           'la fila se puede leer por su clave natural (nombre_emisora)' );
 
-comprobar( $id2 === $id + 1, 'y de uno en uno' );
 
-// guardar de mas, para las pruebas siguientes
-$sentencia = $pdo->prepare( 'DELETE FROM mediciones WHERE id > ?' );
-$sentencia->execute( [ $id ] );
+titulo( '3b. La PRIMARY KEY compuesta (nombre_emisora, fecha)' );
+
+// la MISMA emisora en el MISMO instante no puede guardar dos veces
+try {
+  insertarConFecha( $pdo, '2026-10-12 09:00:00' );
+  insertarConFecha( $pdo, '2026-10-12 09:00:00' );
+  comprobar( false, 'repetir la misma (nombre_emisora, fecha) no salta la clave' );
+} catch ( PDOException $excepcion ) {
+  comprobar( true, 'repetir la misma (nombre_emisora, fecha) da error de clave duplicada' );
+}
+
+// la misma emisora en OTRO instante si cabe
+insertarConFecha( $pdo, '2026-10-12 09:00:05' );
+
+$sentencia = $pdo->prepare( 'SELECT tipo_medicion FROM mediciones
+                            WHERE nombre_emisora = ? AND fecha = ?' );
+$sentencia->execute( [ $nombrePrueba, '2026-10-12 09:00:05' ] );
+
+comprobar( $sentencia->fetch() !== false,
+           'la misma emisora con OTRA fecha si cabe' );
 
 
 titulo( '4. RN3: la fecha la pone la base de datos' );
 
-$sentencia = $pdo->prepare( 'SELECT fecha FROM mediciones WHERE id = ?' );
-$sentencia->execute( [ $id ] );
+$pdo->exec( 'DELETE FROM mediciones' );
+$antes = ahoraMySQL( $pdo );
+insertarMedicion( $pdo, $valorPrueba );
+$despues = ahoraMySQL( $pdo );
+
+$sentencia = $pdo->prepare( 'SELECT fecha FROM mediciones WHERE nombre_emisora = ?' );
+$sentencia->execute( [ $nombrePrueba ] );
 $fechaGuardada = $sentencia->fetchColumn();
 
 comprobar( $fechaGuardada !== null, 'la fecha NO es NULL: la relleno la base de datos' );
@@ -517,10 +560,10 @@ comprobar( stripos( $columnas['fecha']['COLUMN_DEFAULT'], 'CURRENT_TIMESTAMP' ) 
 
 // un INSERT sin la columna fecha tiene que salir con fecha puesta
 $pdo->exec( 'DELETE FROM mediciones' );
-$nuevoId = insertarMedicion( $pdo, 235 );
+insertarMedicion( $pdo, 235 );
 
-$sentencia = $pdo->prepare( 'SELECT fecha FROM mediciones WHERE id = ?' );
-$sentencia->execute( [ $nuevoId ] );
+$sentencia = $pdo->prepare( 'SELECT fecha FROM mediciones WHERE nombre_emisora = ?' );
+$sentencia->execute( [ $nombrePrueba ] );
 
 comprobar( $sentencia->fetchColumn() !== null,
            'una medicion insertada sin fecha sale con fecha igualmente' );
@@ -537,9 +580,9 @@ $fechas = [ '2026-01-15 08:00:00', '2026-06-15 08:00:00', '2026-09-15 08:00:00' 
 
 foreach ( $fechas as $unaFecha ) {
 
-  $idFila = insertarMedicion( $pdo );
-  $sentencia = $pdo->prepare( 'UPDATE mediciones SET fecha = ? WHERE id = ?' );
-  $sentencia->execute( [ $unaFecha, $idFila ] );
+  // insertarConFecha pone la fecha a mano SOLO aqui, para poder construir
+  // un orden conocido; el movil nunca manda la fecha (RN3)
+  insertarConFecha( $pdo, $unaFecha );
 
 } // ()
 
@@ -574,8 +617,11 @@ comprobar( $usaIndice,
 // el LIMIT 50: se meten 55 filas y tienen que salir 50
 $pdo->exec( 'DELETE FROM mediciones' );
 
+// 55 filas de la MISMA emisora. Como la clave es (nombre_emisora, fecha),
+// hay que dar a cada una una fecha distinta (si no, duplicarian la clave:
+// esto ES la prueba 3b). Solo en pruebas se manda la fecha a mano.
 for ( $i = 0; $i < 55; $i++ ) {
-  insertarMedicion( $pdo, 100 + ( $i % 30 ) );
+  insertarConFecha( $pdo, date( 'Y-m-d H:i:s', 1720000000 + $i ) );
 }
 
 $sentencia = $pdo->query( 'SELECT COUNT(*) FROM mediciones' );
@@ -583,7 +629,7 @@ $sentencia = $pdo->query( 'SELECT COUNT(*) FROM mediciones' );
 comprobar( (int) $sentencia->fetchColumn() === 55,
            'se han metido 55 filas' );
 
-$sentencia = $pdo->query( 'SELECT id, fecha FROM mediciones ORDER BY fecha DESC LIMIT 50' );
+$sentencia = $pdo->query( 'SELECT fecha FROM mediciones ORDER BY fecha DESC LIMIT 50' );
 $lasUltimas = $sentencia->fetchAll();
 
 comprobar( count( $lasUltimas ) === 50,
@@ -652,7 +698,7 @@ exit( $GLOBALS['fallos'] === 0 ? 0 : 1 );
 //
 // RESULTADO ESPERADO:
 //
-//     29 pruebas, 0 fallos
+//     28 pruebas, 0 fallos
 //
 // Y despues, el aviso de que se ha borrado la base de datos de pruebas.
 //

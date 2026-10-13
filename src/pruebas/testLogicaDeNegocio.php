@@ -4,14 +4,22 @@
 // Proyecto: Sprint_0_Marc_Villalba
 // Lenguaje: PHP
 // Curso: 3ºGTI
+// Fecha: 13/10/2026
 // =====================================
 
 
 // ===========================================================================
 // testLogicaDeNegocio.php  --  PRUEBAS (PROMPT 4)
 //
-// QUE PRUEBA: la logica de negocio de verdad, la de logica/LogicaDeNegocio.php,
-// complying las reglas de negocio RN1..RN3.
+// QUE PRUEBA: la logica de negocio de verdad, la de
+// src/business_logic/LogicaDeNegocio.php, comprobando las reglas de negocio
+// RN1..RN3.
+//
+// IMPORTANTE: la logica de negocio es INDEPENDIENTE DE LA COMUNICACION, o
+// sea, devuelve objetos de DOMINIO (con ok / id / mediciones / error /
+// clase), NO respuestas de red. Por eso estas pruebas comprueban el
+// resultado de dominio, y NO codigos HTTP ni JSON: traducir a HTTP es cosa
+// de la capa de comunicacion (src/communication/).
 //
 // COMO ESTA HECHO, Y POR QUE: estas pruebas NO usan una base de datos de
 // verdad, sino un PDO FALSO (la clase PDOFalso de mas abajo). El PDO falso
@@ -20,7 +28,7 @@
 // todo en memoria. Gracias a eso se pueden comprobar las RN sin tener
 // XAMPP encendido, y sin instalar ni composer ni PHPUnit.
 //
-// COMO SE CONECHA EL PDO FALSO: conexionBD() de LogicaDeNegocio.php usa la
+// COMO SE CONECTA EL PDO FALSO: conexionBD() de LogicaDeNegocio.php usa la
 // variable global $pdo si ya hay una puesta. Estas pruebas la ponen antes
 // de cada caso, y por eso el codigo real de la base de datos no se ejecuta
 // ni se intenta.
@@ -63,7 +71,7 @@ class SentenciaFalsa {
     $this->parametros = $parametros;
     $this->pdo->ejecuciones++;
 
-    // el fallo se produce aqui, para probar el 500
+    // el fallo se produce aqui, para probar el error de persistencia
     if ( $this->pdo->explotarEn === 'execute' ) {
       throw new PDOException( 'MySQL ha muerto' );
     }
@@ -91,7 +99,7 @@ class SentenciaFalsa {
 // ---------------------------------------------------------------------------
 // PDOFalso : un PDO que no es un PDO, pero se porta como si lo fuera
 //
-// explodingEn es para probar el camino del 500:
+// explotarEn es para probar el camino del error de persistencia:
 //   null      -> no falla nunca
 //   'prepare' -> falla al preparar
 //   'execute' -> falla al ejecutar
@@ -210,14 +218,6 @@ function filtroDePrueba( $desde = null, $hasta = null, $tipo = null, $valor = nu
 
 } // ()
 
-// ---------------------------------------------------------------------------
-// cuerpoDecodificado() : pasa el cuerpo de la respuesta a array
-// ---------------------------------------------------------------------------
-// RespuestaServidor --> cuerpoDecodificado() --> Text
-function cuerpoDecodificado( $respuesta ) {
-  return json_decode( $respuesta->cuerpo, true );
-}
-
 
 // ===========================================================================
 // RN1: el tipo tiene que ser uno de los conocidos
@@ -229,10 +229,9 @@ $falso = ponerPDOFalso();
 
 $r = guardarMedicion( medicionDePrueba( 'tipo_medicion', 'humedad' ) );
 
-comprobar( $r->codigo === 400, 'un tipo desconocido -> 400' );
-
-$json = cuerpoDecodificado( $r );
-comprobar( isset( $json['error'] ), 'el 400 trae un campo "error"' );
+comprobar( $r->ok === false, 'un tipo desconocido devuelve un resultado de error' );
+comprobar( $r->clase === 'validacion', 'el fallo es de validacion (no de la base de datos)' );
+comprobar( $r->error !== null && $r->error !== '', 'la respuesta trae el motivo del error' );
 
 comprobar( $falso->numeroDeSentencias() === 0,
            'NO se prepara ninguna sentencia: no se inserta nada' );
@@ -240,8 +239,8 @@ comprobar( $falso->numeroDeSentencias() === 0,
 comprobar( $falso->ejecuciones === 0,
            'NO se ejecuta nada contra la base de datos' );
 
-// el nombre del error tiene que decir que el tipo no lo reconoce
-comprobar( strpos( (string) ( $json['error'] ?? '' ), 'tipo' ) !== false,
+// el texto del error tiene que decir que el tipo no lo reconoce
+comprobar( strpos( (string) $r->error, 'tipo' ) !== false,
            'el motivo del error habla del tipo' );
 
 
@@ -253,7 +252,7 @@ foreach ( [ 'CO2', 'temperatura', 'prueba' ] as $tipoValido ) {
 
   $r = guardarMedicion( medicionDePrueba( 'tipo_medicion', $tipoValido ) );
 
-  comprobar( $r->codigo === 200, 'el tipo "' . $tipoValido . '" es valido -> 200' );
+  comprobar( $r->ok === true, 'el tipo "' . $tipoValido . '" es valido -> ok' );
 
   comprobar( $falso->inserts === 1, 'se inserta exactamente una fila' );
 
@@ -270,13 +269,13 @@ $falso = ponerPDOFalso();
 
 $r = guardarMedicion( medicionDePrueba( 'valor_medicion', null ) );
 
-comprobar( $r->codigo === 400, 'sin valor_medicion -> 400' );
+comprobar( $r->ok === false, 'sin valor_medicion -> resultado de error' );
+comprobar( $r->clase === 'validacion', 'el fallo (sin valor) tambien es de validacion' );
 
 comprobar( $falso->numeroDeSentencias() === 0,
            'sin valor_medicion NO se inserta nada' );
 
-$json = cuerpoDecodificado( $r );
-comprobar( strpos( (string) ( $json['error'] ?? '' ), 'valor' ) !== false,
+comprobar( strpos( (string) $r->error, 'valor' ) !== false,
            'el motivo del error habla del valor' );
 
 
@@ -286,7 +285,7 @@ $falso = ponerPDOFalso();
 
 $r = guardarMedicion( medicionDePrueba( 'valor_medicion', '1234' ) );
 
-comprobar( $r->codigo === 400, 'un valor_medicion de texto -> 400' );
+comprobar( $r->ok === false, 'un valor_medicion de texto -> error' );
 
 comprobar( $falso->numeroDeSentencias() === 0,
            'un valor_medicion de texto NO se inserta' );
@@ -299,15 +298,15 @@ titulo( 'RN2: el valor_medicion NO se valida contra un valor fijo' );
 
 $falso = ponerPDOFalso();
 $r = guardarMedicion( medicionDePrueba( 'valor_medicion', 999 ) );
-comprobar( $r->codigo === 200, 'un valor_medicion 999 (distinto de 1234) -> 200' );
+comprobar( $r->ok === true, 'un valor_medicion 999 (distinto de 1234) -> ok' );
 
 $falso = ponerPDOFalso();
 $r = guardarMedicion( medicionDePrueba( 'valor_medicion', 0 ) );
-comprobar( $r->codigo === 200, 'un valor_medicion 0 -> 200' );
+comprobar( $r->ok === true, 'un valor_medicion 0 -> ok' );
 
 $falso = ponerPDOFalso();
 $r = guardarMedicion( medicionDePrueba( 'valor_medicion', -7 ) );
-comprobar( $r->codigo === 200, 'un valor_medicion negativo -> 200' );
+comprobar( $r->ok === true, 'un valor_medicion negativo -> ok' );
 
 
 // ===========================================================================
@@ -346,19 +345,23 @@ comprobar( strpos( $sql, 'GTI-3A' ) === false
            'ningun valor esta pegado dentro del SQL (consulta parametrizada)' );
 
 
-titulo( 'RN3: la respuesta lleva el id que ha generado la BD' );
+titulo( 'RN3: la respuesta ya NO lleva id (clave natural compuesta)' );
 
 $falso = ponerPDOFalso();
-$falso->ultimoIdInsertado = 42;
 
 $r = guardarMedicion( medicionDePrueba() );
-$json = cuerpoDecodificado( $r );
 
-comprobar( $json['ok'] === true, 'la respuesta trae {"ok":true}' );
-comprobar( $json['id'] === 42, 'la respuesta trae el id que devolvio la BD' );
-comprobar( is_int( $json['id'] ), 'el id sale como numero' );
-comprobar( is_string( $r->cuerpo ),
-           'el cuerpo es texto (un JSON), porque el endpoint hace echo de el' );
+comprobar( $r->ok === true, 'la operacion correcta devuelve ok' );
+comprobar( ! isset( $r->id ), 'la respuesta NO trae id: la clave de la fila es (nombre_emisora, fecha)' );
+
+// ademas, ya no se le pide al PDO el ultimo id: el objeto ni lo usa
+comprobar( $falso->numeroDeSentencias() === 1
+           && $falso->inserts === 1,
+           'el guardado solo prepara y ejecuta un INSERT, sin lastInsertId' );
+
+// la prueba clave del desacoplamiento: el resultado NO trae nada de transporte
+comprobar( ! isset( $r->codigo ) && ! isset( $r->cuerpo ),
+           'el resultado de negocio NO trae codigo HTTP ni cuerpo JSON' );
 
 
 // ===========================================================================
@@ -369,15 +372,14 @@ titulo( 'recuperarMedicion: sin filtros, se devuelven todas' );
 
 $falso = ponerPDOFalso();
 $falso->filas = [
-  [ 'id' => '1', 'nombre_emisora' => 'GTI-3A', 'tipo_medicion' => 'prueba',
+  [ 'nombre_emisora' => 'GTI-3A', 'tipo_medicion' => 'prueba',
     'valor_medicion' => '1234', 'fecha' => '2026-09-29 10:15:00' ]
 ];
 
 $r = recuperarMedicion( filtroDePrueba() );
 $sql = $falso->ultimaSentencia()->sql;
-$json = cuerpoDecodificado( $r );
 
-comprobar( $r->codigo === 200, 'sin filtros -> 200' );
+comprobar( $r->ok === true, 'sin filtros -> ok' );
 
 comprobar( stripos( $sql, 'WHERE' ) === false,
            'sin filtros, el SELECT no lleva WHERE' );
@@ -391,29 +393,29 @@ comprobar( stripos( $sql, 'ORDER BY fecha DESC' ) !== false,
 comprobar( preg_match( '/LIMIT\s+50/', $sql ) === 1,
            'el SELECT trae LIMIT 50' );
 
-comprobar( isset( $json['mediciones'] ) && is_array( $json['mediciones'] ),
-           'la respuesta trae "mediciones" y es una lista' );
+comprobar( is_array( $r->mediciones ),
+           'la respuesta trae la lista de mediciones' );
 
-comprobar( count( $json['mediciones'] ) === 1, 'viene la fila que hay en la BD' );
+comprobar( count( $r->mediciones ) === 1, 'viene la fila que hay en la BD' );
 
-// los numeros del SELECT salen como numeros en el JSON, no como texto
-$medicion = $json['mediciones'][0];
+// los numeros del SELECT salen como numeros, no como texto
+$medicion = $r->mediciones[0];
 
-comprobar( $medicion['valor_medicion'] === 1234 && is_int( $medicion['valor_medicion'] ),
+comprobar( $medicion->valor_medicion === 1234 && is_int( $medicion->valor_medicion ),
            'el valor_medicion sale como numero, no como texto' );
 
-comprobar( $medicion['tipo_medicion'] === 'prueba',
+comprobar( $medicion->tipo_medicion === 'prueba',
            'el tipo_medicion sale como el texto que hay en la BD' );
 
-comprobar( $medicion['fecha'] === '2026-09-29 10:15:00',
+comprobar( $medicion->fecha === '2026-09-29 10:15:00',
            'la fecha viene de la BD, tal cual' );
 
-comprobar( isset( $medicion['nombre_emisora'] ) && isset( $medicion['tipo_medicion'] )
-           && isset( $medicion['valor_medicion'] ),
-           'la medicion trae los tres campos de la medicion mas el id y la fecha' );
+comprobar( isset( $medicion->nombre_emisora ) && isset( $medicion->tipo_medicion )
+           && isset( $medicion->valor_medicion ) && isset( $medicion->fecha ),
+           'la medicion trae los cuatro campos de la tabla' );
 
-comprobar( $medicion['id'] === 1 && is_int( $medicion['id'] ),
-           'la medicion trae el id, que es lo que pinta la web en la primera columna' );
+comprobar( ! isset( $medicion->id ),
+           'la medicion NO trae id: su clave es (nombre_emisora, fecha)' );
 
 
 titulo( 'recuperarMedicion: con un solo filtro, solo ese filtro' );
@@ -489,31 +491,29 @@ comprobar( preg_match( '/LIMIT\s+50$/', trim( $falso->ultimaSentencia()->sql ) )
 
 
 // ===========================================================================
-// RN5: los errores de MySQL se responden con 500, no con una pantalla en blanco
+// RN5: los fallos de MySQL se devuelven como error de persistencia
 // ===========================================================================
 
-titulo( 'Errores: un PDO que revienta -> 500' );
+titulo( 'Errores: un PDO que revienta -> error de persistencia' );
 
 $falso = ponerPDOFalso();
 $falso->explotarEn = 'prepare';
 $r = guardarMedicion( medicionDePrueba() );
-$json = cuerpoDecodificado( $r );
 
-comprobar( $r->codigo === 500, 'si falla al guardar -> 500' );
-comprobar( isset( $json['error'] ), 'el 500 trae un campo "error"' );
-comprobar( is_string( $r->cuerpo ), 'el 500 tambien es JSON en texto' );
+comprobar( $r->ok === false, 'si falla al guardar -> resultado de error' );
+comprobar( $r->clase === 'persistencia', 'el fallo de la BD es de persistencia' );
+comprobar( $r->error !== null, 'la respuesta trae el motivo del error' );
 
 // el error de MySQL NO se le enseña al cliente, por si lleva datos de la BD
-comprobar( strpos( $r->cuerpo, 'MySQL ha muerto' ) === false,
-           'al cliente no se le enseña el texto real del error de MySQL' );
+comprobar( strpos( (string) $r->error, 'MySQL ha muerto' ) === false,
+           'el error de negocio NO filtra el texto real del error de MySQL' );
 
 $falso = ponerPDOFalso();
 $falso->explotarEn = 'fetch';
 $r = recuperarMedicion( filtroDePrueba() );
-$json = cuerpoDecodificado( $r );
 
-comprobar( $r->codigo === 500, 'si falla al leer -> 500' );
-comprobar( isset( $json['error'] ), 'el 500 trae un campo "error"' );
+comprobar( $r->ok === false, 'si falla al leer -> resultado de error' );
+comprobar( $r->clase === 'persistencia', 'el fallo al leer tambien es de persistencia' );
 
 
 titulo( 'La conexion se reutiliza' );
@@ -527,11 +527,38 @@ comprobar( $falso->ejecuciones === 0 && $GLOBALS['pdo'] === $falso,
            'conexionBD() usa la misma conexion, no abre una nueva' );
 
 
+// ===========================================================================
+// DESACOPLAMIENTO: la logica de negocio no conoce la comunicacion
+//
+// Esta seccion es la que demuestra la "Zero Dependency Rule": se lee el
+// propio fichero de la logica de negocio y se comprueba que NO aparece nada
+// de transporte (ni codigos HTTP, ni cabeceras, ni JSON, ni rutas).
+// ===========================================================================
+
+titulo( 'Desacoplamiento: la logica de negocio no usa HTTP/JSON' );
+
+$fuente = file_get_contents( __DIR__ . '/../business_logic/LogicaDeNegocio.php' );
+
+comprobar( strpos( $fuente, 'http_response_code' ) === false,
+           'la logica de negocio no fija codigos HTTP' );
+
+comprobar( strpos( $fuente, 'header(' ) === false,
+           'la logica de negocio no escribe cabeceras HTTP' );
+
+comprobar( strpos( $fuente, 'json_encode' ) === false,
+           'la logica de negocio no monta JSON' );
+
+comprobar( strpos( $fuente, 'curl_' ) === false
+           && strpos( $fuente, '$_SERVER' ) === false
+           && strpos( $fuente, '$_GET' ) === false,
+           'la logica de negocio no habla de transporte (ni curl ni superglobales de peticion)' );
+
+
 // ===== PRUEBAS =====
 //
-// COMANDO, desde la carpeta pruebas/ :
+// COMANDO, desde la raiz del proyecto:
 //
-//     php testLogicaDeNegocio.php
+//     php src\pruebas\testLogicaDeNegocio.php
 //
 // ESTAS PRUEBAS NO NECESITAN SERVIDOR NI BASE DE DATOS: llevan su propio PDO
 // falso, asi que se pueden correr con MySQL apagado.
@@ -541,21 +568,7 @@ comprobar( $falso->ejecuciones === 0 && $GLOBALS['pdo'] === $falso,
 //
 // RESULTADO ESPERADO:
 //
-//      60 pruebas, 0 fallos
-//
-// Y una linea mas al final con las pruebas que han pasado. Si sale
-// "1 fallos" o mas, el numero del fallo es el del principio de la seccion.
-//
-// QUE NO SE COMPRUEBA AQUI, Y POR QUE:
-//
-//   - Que el INSERT funcione de verdad contra MySQL. Aqui solo se mira el
-//     SQL que se ha construido. Lo comprueba el PROMPT 5, con la base de
-//     datos ya creada.
-//   - Que la tabla mediciones tenga esas columnas. Tambien es del PROMPT 5.
-//   - Los endpoints REST de verdad. Eso lo hace testEndpointsRest.php, pero
-//     OJO: desde que la logica de negocio es la real (PROMPT 4), ese
-//     fichero ya no sirve tal cual, porque la logica real necesita MySQL.
-//     Requiere que la BD proyecto_beacon exista (PROMPT 5).
+//      66 pruebas, 0 fallos
 //
 // ===========================================================================
 

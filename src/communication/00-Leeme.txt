@@ -84,22 +84,12 @@ En otra consola, desde la carpeta src/pruebas/:
 Tiene que decir "0 fallos". El codigo de salida es 0 si todo pasa y 1 si
 hay algun fallo.
 
-	OJO: src/pruebas/testAuxiliaresRest.php NO FUNCIONA, no lo ejecutes.
-	Las pruebas de los auxiliares quedan SIN CUBRIR por ahora, asi que lo
-	que se prueba de verdad es lo que ve el cliente (codigo HTTP y JSON
-	de la respuesta), que es lo que importa.
-	El fallo es este: para usar parsearJSON() y extraerFiltros() el
-	fichero tiene que incluir (require) los endpoints de communication/, pero al
-	incluirlos tambien se ejecuta su codigo, que comprueba el metodo HTTP.
-	En consola no hay metodo HTTP, asi que guardarMedicion.php responde un
-	405 y llama a exit(), que corta el script de pruebas al instante:
-	solo imprime {"error":"Metodo no permitido"} y no llega a hacer ninguna
-	prueba. El exit() no se puede tapar con output buffering.
-	Para arreglarlo habria que meter una guardia en los endpoints del tipo
-	if (realpath($_SERVER['SCRIPT_FILENAME']) === __FILE__) alrededor del
-	bloque que atiende la peticion, para que solo se ejecute cuando al
-	endpoint lo pide el navegador y no otro script. De momento se ha
-	decidido no tocar los endpoints por eso.
+	YA RESUELTO: src/pruebas/testAuxiliaresRest.php SI funciona (19
+	pruebas, 0 fallos) y NO necesita servidor. Los auxiliares parsearJSON()
+	y extraerFiltros() se sacaron a communication/auxiliares.php, un fichero
+	que solo define funciones, asi que las pruebas hacen require de el sin
+	ejecutar ningun endpoint. Lo que prueba lo que ve el cliente (codigo
+	HTTP y JSON) es testEndpointsRest.php.
 
 testEndpointsRest.php necesita la extension "curl" de PHP. Si al
 ejecutarlo dice que no existe la funcion curl_init(), hay que activarla
@@ -109,8 +99,9 @@ en php.ini, quitando el ; (punto y coma) de delante de la linea:
 
 Comprobar la sintaxis de un solo fichero:
 
-	php -l rest\guardarMedicion.php
-	php -l rest\recuperarMedicion.php
+	php -l communication\guardarMedicion.php
+	php -l communication\recuperarMedicion.php
+	php -l communication\auxiliares.php
 
 5. LOGICA DE NEGOCIO (PROMPT 4) - CUIDADO, NECESITA LA BASE DE DATOS
 ---------------------------------------------------------------------
@@ -126,9 +117,9 @@ la logica en business_logic/guardarMedicion.php y business_logic/recuperarMedici
 asi los endpoints no hay que tocarlos. Las dos funciones de verdad viven
 juntas en LogicaDeNegocio.php porque comparten la conexion y los helpers.
 
-AHORA LOS ENDPOINTS NECESITAN MySQL. Antes usaban el stub de src/pruebas/, que
-era tonto y no necesitaba base de datos. Ahora hacen INSERT y SELECT de
-verdad contra la tabla mediciones, asi que:
+AHORA LOS ENDPOINTS NECESITAN MySQL. Los endpoints cargan la logica de
+negocio DE VERDAD (business_logic/) y hacen INSERT y SELECT reales contra
+la tabla mediciones, asi que:
 
 	- MySQL tiene que estar encendido (XAMPP)
 	- la base de datos proyecto_beacon tiene que existir y tener la tabla
@@ -170,16 +161,15 @@ principio del fichero.
 	                              borra esa base al terminar. NO toca
 	                              proyecto_beacon, la de verdad.
 
-	php testEndpointsRest.php     NO de momento. Necesita la base de datos y
-	                              ademas espera los datos fijos del stub
-	                              (id 42). Rehacerlo cuando haya tabla.
+	php testEndpointsRest.php     SI, pero necesita el servidor arrancado Y
+	                              MySQL con la tabla mediciones: hace
+	                              peticiones http de verdad al endpoint.
 
-	php testAuxiliaresRest.php    NO. Esta roto, ver seccion 4.
+	php testAuxiliaresRest.php    SI. 19 pruebas, no necesita servidor ni
+	                              MySQL (prueba communication/auxiliares.php).
 
-	stubLogicaDeNegocio.php       Ha dejado de usarse: los endpoints ya
-	                              encuentran la logica de verdad. Se puede
-	                              borrar cuando quieras; se ha dejado
-	                              puesto por si hay que volver atras.
+	stubLogicaDeNegocio.php       BORRADO. Ya no existe: los endpoints usan
+	                              business_logic/ directamente.
 
 Para pasar las que si valen, de una vez:
 
@@ -187,11 +177,13 @@ Para pasar las que si valen, de una vez:
 
 Comprobar la sintaxis de todos los ficheros:
 
-	php -l logica\LogicaDeNegocio.php
-	php -l logica\configuracion.php
-	php -l logica\guardarMedicion.php
-	php -l logica\recuperarMedicion.php
-	php -l rest\guardarMedicion.php
-	php -l rest\recuperarMedicion.php
+	php -l business_logic\LogicaDeNegocio.php
+	php -l business_logic\configuracion.php
+	php -l business_logic\guardarMedicion.php
+	php -l business_logic\recuperarMedicion.php
+	php -l communication\guardarMedicion.php
+	php -l communication\recuperarMedicion.php
+	php -l communication\auxiliares.php
 	php -l pruebas\testLogicaDeNegocio.php
 	php -l pruebas\testBaseDeDatos.php
+	php -l pruebas\testAuxiliaresRest.php

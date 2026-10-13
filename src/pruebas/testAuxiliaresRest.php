@@ -4,53 +4,29 @@
 // Proyecto: Sprint_0_Marc_Villalba
 // Lenguaje: PHP
 // Curso: 3ºGTI
+// Fecha: 13/10/2026
 // =====================================
 
 
 // ===========================================================================
 // testAuxiliaresRest.php  --  PRUEBAS (PROMPT 3)
 //
-// ###########################################################################
-// #  ESTE FICHERO NO FUNCIONA. NO LO EJECUTES.                               #
-// #                                                                          #
-// # Para usar parsearJSON() y extraerFiltros() hace falta incluir (require)  #
-// # los endpoints de rest/, pero al incluirlos se ejecuta tambien su       #
-// # codigo, que comprueba el metodo HTTP. En consola no hay metodo HTTP,     #
-// # asi que guardarMedicion.php responde un 405 y llama a exit(), que      #
-// # corta este script al instante: solo imprime                               #
-// # {"error":"Metodo no permitido"} y no llega a hacer ninguna prueba.       #
-// #                                                                          #
-// # El exit() no se puede tapar con output buffering, de ahi el ob_start()   #
-// # de abajo, que no sirve para nada.                                        #
-// #                                                                          #
-// # Lo que SI funciona es testEndpointsRest.php, que prueba lo mismo por    #
-// # http de verdad. Ver la seccion 4 del 00-Leeme.txt.                       #
-// #                                                                          #
-// # Para arreglar este fichero habria que meter una guardia en los           #
-// # endpoints, del tipo:                                                     #
-// #                                                                          #
-// #     if (realpath($_SERVER['SCRIPT_FILENAME']) === __FILE__) { ... }     #
-// #                                                                          #
-// # alrededor del bloque que atiende la peticion, para que ese bloque solo   #
-// # se ejecute cuando al endpoint lo pide el navegador y no otro script.    #
-// # De momento se ha decidido no tocar los endpoints.                        #
-// ###########################################################################
-//
-// QUE PRUEBA (si algun dia se arregla): los dos metodos auxiliares de los
-// endpoints REST, sin necesidad de arrancar el servidor:
+// QUE PRUEBA: los dos metodos auxiliares de la capa de comunicacion, sin
+// necesidad de arrancar el servidor:
 //   - parsearJSON()      : JSON -> Medicion
 //   - extraerFiltros()   : query -> FiltroMediciones
+//
+// Antes estas funciones vivian dentro de los endpoints y, al incluir el
+// endpoint para probarlas, se ejecutaba tambien la atencion de la peticion
+// (que terminaba con un exit()): estas pruebas no podian funcionar.
+// Ahora viven en communication/auxiliares.php, un fichero que SOLO define
+// funciones, asi que se puede hacer require sin que se ejecute nada mas.
 //
 // Notacion: Logical Design & Reverse Engineering v3
 // ===========================================================================
 
-// Las pruebas necesitan las funciones, que estan dentro de los endpoints
-// de rest/. Se incluyen con output buffering para que los endpoints no
-// escriban su HTML/JSON aqui: solo queremos las funciones.
-ob_start();
-require_once __DIR__ . '/../communication/guardarMedicion.php';
-require_once __DIR__ . '/../communication/recuperarMedicion.php';
-ob_end_clean();
+// Los auxiliares de comunicacion (solo definen funciones).
+require_once __DIR__ . '/../communication/auxiliares.php';
 
 // ===========================================================================
 // PEQUENA BIBLIOTECA DE PRUEBAS

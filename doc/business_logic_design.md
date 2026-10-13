@@ -3,9 +3,8 @@
 *Reglas de negocio del servidor: la capa que valida y persiste las mediciones.*
 *Notación: Logical Design & Reverse Engineering Specification v3.*
 
-> Esta capa es **100 % independiente de la comunicación**: no conoce HTTP, ni
-> códigos de estado, ni JSON, ni rutas, ni cabeceras, ni sockets. Solo trabaja con
-> tipos de dominio y con la base de datos descrita en `database_design.md`.
+> Esta capa es **100 % independiente del transporte**: solo trabaja con tipos de
+> dominio y con la base de datos descrita en `database_design.md`.
 
 ## Component Design
 
@@ -28,8 +27,10 @@ FiltroMediciones = (
 
 MedicionesID = { CO2 = 1, TEMPERATURA = 2, PRUEBA = 3 }
 
-ResultadoGuardado = ( ok: B, id: N | vacío, error: Text | vacío )
-ResultadoLista    = ( ok: B, mediciones: [ Medicion ], error: Text | vacío )
+ResultadoGuardado = ( ok: B, error: Text | vacío, clase: ClaseError | vacío )
+ResultadoLista    = ( ok: B, mediciones: [ Medicion ], error: Text | vacío, clase: ClaseError | vacío )
+
+ClaseError = { VALIDACION = 'validacion', PERSISTENCIA = 'persistencia' }
 ```
 
 ### 2. Diagrama del módulo `LogicaDeNegocio`
@@ -72,23 +73,23 @@ f: FiltroMediciones --> recuperarMedicion() <-- ResultadoLista
 m: Medicion --> guardarMedicion() --> ResultadoGuardado
                 |
                 | 1. validar m: RN1 (tipo conocido) y RN2 (valor entero)
-                |        ? inválido -> ResultadoGuardado( ok=false, error )
+                |        ? inválido -> ResultadoGuardado( ok=false, clase='validacion', error )
                 |
                 | 2. INSERT INTO mediciones (nombre_emisora, tipo_medicion, valor_medicion)
-                |        -> id: N        // la BD rellena fecha (RN3)
+                |        -> la BD rellena fecha (RN3)
                 |
-                | 3. -> ResultadoGuardado( ok=true, id )
-                |        (fallo de BD -> ResultadoGuardado( ok=false, error ))
+                | 3. -> ResultadoGuardado( ok=true )
+                |        (fallo de BD -> ResultadoGuardado( ok=false, clase='persistencia', error ))
 
 f: FiltroMediciones --> recuperarMedicion() --> ResultadoLista
                 |
-                | 1. SELECT id, nombre_emisora, tipo_medicion, valor_medicion, fecha
+                | 1. SELECT nombre_emisora, tipo_medicion, valor_medicion, fecha
                 |        FROM mediciones
                 |        WHERE <filtros opcionales>
                 |        ORDER BY fecha DESC LIMIT 50
                 |
                 | 2. -> ResultadoLista( ok=true, mediciones )
-                |        (fallo de BD -> ResultadoLista( ok=false, error ))
+                |        (fallo de BD -> ResultadoLista( ok=false, clase='persistencia', error ))
 ```
 
 ### 5. Alineación con el diseño de la base de datos
@@ -100,10 +101,10 @@ exactamente a `database_design.md` (tabla `mediciones`):
 guardarMedicion( m: Medicion )
    = INSERT INTO mediciones (nombre_emisora, tipo_medicion, valor_medicion)
      VALUES ( m.nombre_emisora, m.tipo_medicion, m.valor_medicion )
-     -> id: N                              // sin fecha: la pone la BD (RN3)
+     -> ok                                // sin fecha: la pone la BD (RN3)
 
 recuperarMedicion( f: FiltroMediciones )
-   = SELECT id, nombre_emisora, tipo_medicion, valor_medicion, fecha
+   = SELECT nombre_emisora, tipo_medicion, valor_medicion, fecha
      FROM mediciones
      WHERE f.desde? / f.hasta? / f.tipo_medicion? / f.valor_medicion?
      ORDER BY fecha DESC LIMIT 50
@@ -113,11 +114,13 @@ recuperarMedicion( f: FiltroMediciones )
 
 - La lógica de negocio tiene **solo dos funciones públicas**: `guardarMedicion()`
   y `recuperarMedicion()`. Las funciones auxiliares (`conexionBD`, `validaMedicion`,
-  `respuestaJSON`, `valorDeFiltro`, `limitesDeFecha`) son detalles de implementación,
-  no forman parte del contrato.
-- El **resultado se expresa con tipos de dominio** (`ok`, `id`, `mediciones`,
-  `error`), nunca con códigos HTTP ni con texto JSON: traducir eso a respuesta de
-  red es responsabilidad de la capa de comunicación (`communication_design.md`).
+  `limitesDeFecha`, `resultadoGuardado`, `resultadoLista`) son detalles de
+  implementación, no forman parte del contrato.
+- El **resultado se expresa siempre con tipos de dominio** (`ok`,
+  `mediciones`, `error`, `clase`). No hay `id`: la clave de la fila guardada es la
+  natural compuesta `(nombre_emisora, fecha)`.
+- `clase` distingue el **tipo de fallo** (`'validacion'` o `'persistencia'`), que es
+  un concepto de dominio puro (datos inválidos frente a fallo al persistir).
 - La regla RN2 no fija un valor concreto: `valor_medicion` es el dato que manda el
   cliente en cada medición.
 

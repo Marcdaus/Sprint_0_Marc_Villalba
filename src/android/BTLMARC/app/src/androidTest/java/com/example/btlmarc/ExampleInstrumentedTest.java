@@ -3,6 +3,7 @@
 // Proyecto: Sprint_0_Marc_Villalba
 // Lenguaje: Java
 // Curso: 3ºGTI
+// Fecha: 13/10/2026
 // =====================================
 
 package com.example.btlmarc;

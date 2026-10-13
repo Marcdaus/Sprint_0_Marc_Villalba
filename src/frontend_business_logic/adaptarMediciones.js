@@ -3,6 +3,7 @@
 // Proyecto: Sprint_0_Marc_Villalba
 // Lenguaje: JavaScript
 // Curso: 3ºGTI
+// Fecha: 13/10/2026
 // =====================================
 
 // ---------------------------------------------------
@@ -36,9 +37,6 @@ function adaptarMediciones( mediciones ) {
 	return mediciones.map( function ( medicion ) {
 
 		return {
-
-			// el id lo enseña la web en la primera columna de la tabla
-			id: viene( medicion, "id" ) ? medicion.id : null,
 
 			// el nombre de la emisora
 			nombre: viene( medicion, "nombre_emisora" ) ? medicion.nombre_emisora : null,

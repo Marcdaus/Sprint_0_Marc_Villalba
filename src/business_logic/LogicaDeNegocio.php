@@ -4,6 +4,7 @@
 // Proyecto: Sprint_0_Marc_Villalba
 // Lenguaje: PHP
 // Curso: 3ºGTI
+// Fecha: 13/10/2026
 // =====================================
 
 
@@ -13,24 +14,44 @@
 // ESTE FICHERO ES EL CORAZON DEL SERVIDOR. Aqui viven las dos unicas
 // funciones publicas que usan los endpoints REST (PROMPT 3):
 //
-//     guardarMedicion( Medicion m )       -> RespuestaServidor
-//     recuperarMedicion( FiltroMediciones f ) -> RespuestaServidor
+//     guardarMedicion( Medicion m )            -> ResultadoGuardado
+//     recuperarMedicion( FiltroMediciones f )  -> ResultadoLista
 //
-// Que hace cada una, paso a paso:
+// IMPORTANTE: esta capa es 100% INDEPENDIENTE DE LA COMUNICACION. Aqui NO
+// hay nada de HTTP: no se eligen codigos de estado (200/400/500), no se
+// escriben cabeceras, no se monta JSON y no se conocen rutas ni sockets.
+// Todo eso es trabajo de la capa de comunicacion (src/communication/), que
+// traduce el resultado de dominio a una respuesta de red.
+//
+// El resultado se expresa con objetos de DOMINIO (ver ResultadoGuardado y
+// ResultadoLista mas abajo), que dicen:
+//   - ok     : si la operacion ha ido bien
+//   - el dato : la lista de mediciones (en recuperarMedicion)
+//   - error  : el motivo (texto) si ha fallado
+//   - clase  : de que tipo es el fallo ( 'validacion' o 'persistencia' )
+//
+// La "clase" del fallo es un concepto de NEGOCIO (un dato mal formado frente
+// a un problema al guardar), NO un codigo HTTP. Es la comunicacion quien
+// decide que 'validacion' se cuenta como 400 y 'persistencia' como 500.
+//
+// Que hace cada funcion, paso a paso:
 //
 //   guardarMedicion(m)
 //     1. VALIDAR las reglas de negocio RN1 y RN2. Si alguna falla, se
-//        responde 400 y NO se inserta NADA.
+//        devuelve un ResultadoGuardado con clase 'validacion' y NO se
+//        inserta NADA.
 //     2. INSERTAR la medicion. El INSERT NO lleva la columna fecha: la
 //        pone la base de datos sola (RN3).
-//     3. Responder 200 con el id que ha generado la BD.
+//     3. Devolver un ResultadoGuardado ok. No hay id: la clave de la fila
+//        es la natural compuesta (nombre_emisora, fecha), y la fecha la ha
+//        generado la BD en el paso 2.
 //
 //   recuperarMedicion(f)
 //     1. Montar el SELECT.
-//     2. Añadir el WHERE SOLO con los filtros que venir informedos
+//     2. Añadir el WHERE SOLO con los filtros que vienen informedos
 //        (todos son opcionales).
 //     3. ORDER BY fecha DESC LIMIT <limiteConsulta>.
-//     4. Responder 200 con la lista de mediciones.
+//     4. Devolver un ResultadoLista ok con la lista de mediciones.
 //
 // REGLAS DE NEGOCIO (RN):
 //   RN1  el tipo_medicion tiene que ser uno de los conocidos:
@@ -42,14 +63,15 @@
 //   RN3  la fecha NO la manda ni la app ni el servidor: la pone la BD con
 //        DEFAULT CURRENT_TIMESTAMP, asi que el INSERT no la lleva.
 //   RN4  acceso publico: no hay sesion ni login.
-//   RN5  siempre se responde con un codigo HTTP y un JSON correctos.
+//   RN5  ante un dato invalido o un fallo de la base de datos se devuelve un
+//        resultado de error de dominio (con su motivo y su clase).
 //
 // QUE HAY DENTRO, ADEMAS DE LAS DOS PUBLICAS: unas cuantas funciones
-// internas (conexionBD, validaMedicion, respuestaJSON, respuestaError,
-// valorDeFiltro, limitesDeFecha) que son detalles de implementacion. En PHP
-// plano no existen las funciones privadas, asi que estan marcadas como
-// internas en el comentario y no forman parte del contrato: lo publico es
-// solo guardarMedicion() y recuperarMedicion().
+// internas (conexionBD, validaMedicion, limitesDeFecha, resultadoGuardado,
+// resultadoLista) que son detalles de implementacion. En PHP plano no
+// existen las funciones privadas, asi que estan marcadas como internas en
+// el comentario y no forman parte del contrato: lo publico es solo
+// guardarMedicion() y recuperarMedicion().
 //
 // ACCESO A LA BD: con PDO y driver MySQL, y SIEMPRE con consultas
 // parametrizadas (con ? y execute(array), nunca con interpolacion de
@@ -165,39 +187,6 @@ function validaMedicion( $m ) {
 
 
 // ---------------------------------------------------------------------------
-// respuestaJSON() : monta la RespuestaServidor que esperan los endpoints
-//
-// Los endpoints del PROMPT 3 hacen echo de $respuesta->cuerpo, asi que el
-// cuerpo tiene que ser el JSON YA en texto, no un array de PHP.
-//
-// datos: Text --> respuestaJSON( codigo: N, datos: Text ) --> RespuestaServidor
-// ---------------------------------------------------------------------------
-function respuestaJSON( $codigo, $datos ) {
-
-  $respuesta = new stdClass();
-  $respuesta->codigo = $codigo;
-  // JSON_UNESCAPED_UNICODE: deja los acentos como acentos, para que el
-  // error "falta el valor_medicion" o "medicion" se lea bien en el log del movil
-  $respuesta->cuerpo = json_encode( $datos, JSON_UNESCAPED_UNICODE );
-
-  return $respuesta;
-
-} // ()
-
-
-// ---------------------------------------------------------------------------
-// respuestaError() : atajo para responder solo con un {"error": "..."}
-//
-// codigo: N, motivo: Text --> respuestaError() --> RespuestaServidor
-// ---------------------------------------------------------------------------
-function respuestaError( $codigo, $motivo ) {
-
-  return respuestaJSON( $codigo, [ 'error' => $motivo ] );
-
-} // ()
-
-
-// ---------------------------------------------------------------------------
 // limitesDeFecha() : prepara los filtros desde y hasta para el WHERE
 //
 // La fecha de la BD es un DATETIME, pero los filtros llegan como texto. Si
@@ -233,24 +222,69 @@ function limitesDeFecha( $desde, $hasta ) {
 
 
 // ---------------------------------------------------------------------------
+// resultadoGuardado() : empaqueta el resultado de guardarMedicion()
+//
+// Es un objeto de DOMINIO, no una respuesta de red: dice si ha ido bien y,
+// si ha fallado, el motivo y de que clase es el fallo ('validacion' o
+// 'persistencia'). Aqui NO hay codigos HTTP ni JSON. Tampoco hay id: la
+// clave de la fila es la natural compuesta (nombre_emisora, fecha).
+//
+// ok: B, error: Text?, clase: Text? --> resultadoGuardado() --> ResultadoGuardado
+// ---------------------------------------------------------------------------
+function resultadoGuardado( $ok, $error, $clase ) {
+
+  $resultado = new stdClass();
+  $resultado->ok    = $ok;
+  $resultado->error = $error;
+  $resultado->clase = $clase;
+
+  return $resultado;
+
+} // ()
+
+
+// ---------------------------------------------------------------------------
+// resultadoLista() : empaqueta el resultado de recuperarMedicion()
+//
+// Igual que resultadoGuardado(), pero para una lista de mediciones. Tambien
+// es un objeto de dominio, sin nada de transporte.
+//
+// ok: B, mediciones: [ Medicion ], error: Text?, clase: Text? --> resultadoLista() --> ResultadoLista
+// ---------------------------------------------------------------------------
+function resultadoLista( $ok, $mediciones, $error, $clase ) {
+
+  $resultado = new stdClass();
+  $resultado->ok         = $ok;
+  $resultado->mediciones = $mediciones;
+  $resultado->error      = $error;
+  $resultado->clase      = $clase;
+
+  return $resultado;
+
+} // ()
+
+
+// ---------------------------------------------------------------------------
 // guardarMedicion() : valida y guarda una medicion en la base de datos
 //
-// Recibe la Medicion que le pasa el endpoint REST y devuelve lo que el
-// endpoint tiene que responderle al cliente: codigo HTTP y JSON.
+// Recibe la Medicion que le pasa la capa de comunicacion y devuelve un
+// ResultadoGuardado de DOMINIO (ok, o error + clase). No decide codigos
+// HTTP: eso lo hace el endpoint.
 //
-// La fecha NO la pone este codigo: la pone la BD (RN3).
+// La fecha NO la pone este codigo: la pone la BD (RN3). Junto con el
+// nombre_emisora forma la clave primaria natural de la fila.
 //
-// m: Medicion --> guardarMedicion() --> RespuestaServidor
+// m: Medicion --> guardarMedicion() --> ResultadoGuardado
 // ---------------------------------------------------------------------------
 function guardarMedicion( $medicion ) {
 
   // ---------------------------------------------------------------
-  // 1. VALIDAR las RN. Si falla, 400 y NO se inserta nada
+  // 1. VALIDAR las RN. Si falla, error de validacion y NO se inserta nada
   // ---------------------------------------------------------------
   $validacion = validaMedicion( $medicion );
 
   if ( $validacion->ok !== true ) {
-    return respuestaError( 400, $validacion->motivo );
+    return resultadoGuardado( false, $validacion->motivo, 'validacion' );
   }
 
   try {
@@ -270,13 +304,9 @@ function guardarMedicion( $medicion ) {
                            $medicion->tipo_medicion,
                            $medicion->valor_medicion ] );
 
-    // el id lo genera la BD (AUTO_INCREMENT)
-    $id = (int) $pdo->lastInsertId();
-
-    // ---------------------------------------------------------------
-    // 3. RESPONDER 200 con el id guardado
-    // ---------------------------------------------------------------
-    return respuestaJSON( 200, [ 'ok' => true, 'id' => $id ] );
+    // no hay id que devolver: la clave de la fila es la natural
+    // (nombre_emisora, fecha), y la fecha la ha puesto la BD en este INSERT
+    return resultadoGuardado( true, null, null );
 
   } catch ( PDOException $excepcion ) {
 
@@ -285,7 +315,7 @@ function guardarMedicion( $medicion ) {
     // la base de datos, y el movil no necesita saber eso
     error_log( 'guardarMedicion: ' . $excepcion->getMessage() );
 
-    return respuestaError( 500, 'Error al guardar la medicion' );
+    return resultadoGuardado( false, 'Error al guardar la medicion', 'persistencia' );
 
   }
 
@@ -295,14 +325,15 @@ function guardarMedicion( $medicion ) {
 // ---------------------------------------------------------------------------
 // recuperarMedicion() : devuelve las mediciones, filtradas y ordenadas
 //
-// Recibe el FiltroMediciones que le pasa el endpoint REST (todos sus
-// campos son opcionales) y devuelve las mediciones de la BD.
+// Recibe el FiltroMediciones que le pasa la capa de comunicacion (todos sus
+// campos son opcionales) y devuelve un ResultadoLista de DOMINIO con las
+// mediciones de la BD. No decide codigos HTTP: eso lo hace el endpoint.
 //
 // Los filtros que no vienen informedos NO se ponen en el WHERE: sin
 // valor_medicion no se filtra por valor_medicion, y asi.
 // La fecha es de la BD, no la manda la app.
 //
-// f: FiltroMediciones --> recuperarMedicion() --> RespuestaServidor
+// f: FiltroMediciones --> recuperarMedicion() --> ResultadoLista
 // ---------------------------------------------------------------------------
 function recuperarMedicion( $filtro ) {
 
@@ -315,9 +346,7 @@ function recuperarMedicion( $filtro ) {
     // ---------------------------------------------------------------
     // 1. SELECT base
     // ---------------------------------------------------------------
-    // El "id" tambien se trae: la web (PROMPTs 6 y 7) lo enseña en la
-    // primera columna de la tabla. Antes faltaba y no se podia pintar.
-    $columnas = 'id, nombre_emisora, tipo_medicion, valor_medicion, fecha';
+    $columnas = 'nombre_emisora, tipo_medicion, valor_medicion, fecha';
     $sql = 'SELECT ' . $columnas . ' FROM mediciones';
 
     $condiciones = [];
@@ -363,19 +392,14 @@ function recuperarMedicion( $filtro ) {
 
     $filas = $sentencia->fetchAll();
 
-    // se montan una a una para dejar los numeros como numeros en el JSON
-    // (id, valor_medicion), y no como texto
+    // se montan una a una para dejar el valor_medicion como numero y no
+    // como texto; la clave de la fila (nombre_emisora + fecha) es de la BD
     $mediciones = [];
 
     foreach ( $filas as $fila ) {
 
       $medicion = new stdClass();
 
-      // el id va el primero: es la clave de la fila y la web (PROMPTs 6 y
-      // 7) lo enseña en la primera columna de la tabla. OJO: como aqui se
-      // copia campo a campo, anadir el id al SELECT no basta, tambien
-      // hay que copiarlo aqui o no llegaria al JSON
-      $medicion->id             = (int) $fila['id'];
       $medicion->nombre_emisora = $fila['nombre_emisora'];
       $medicion->tipo_medicion  = $fila['tipo_medicion'];
       $medicion->valor_medicion = (int) $fila['valor_medicion'];
@@ -386,15 +410,15 @@ function recuperarMedicion( $filtro ) {
     }
 
     // ---------------------------------------------------------------
-    // 4. RESPONDER 200 con la lista
+    // 4. Devolver un resultado ok con la lista
     // ---------------------------------------------------------------
-    return respuestaJSON( 200, [ 'mediciones' => $mediciones ] );
+    return resultadoLista( true, $mediciones, null, null );
 
   } catch ( PDOException $excepcion ) {
 
     error_log( 'recuperarMedicion: ' . $excepcion->getMessage() );
 
-    return respuestaError( 500, 'Error al recuperar las mediciones' );
+    return resultadoLista( false, [], 'Error al recuperar las mediciones', 'persistencia' );
 
   }
 

@@ -3,6 +3,7 @@
 // Proyecto: Sprint_0_Marc_Villalba
 // Lenguaje: C++ (Arduino)
 // Curso: 3ºGTI
+// Fecha: 13/10/2026
 // =====================================
 
 #ifndef SERVICIO_EMISORA_H_INCLUIDO

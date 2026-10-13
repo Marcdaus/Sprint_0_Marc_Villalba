@@ -4,6 +4,7 @@
 // Proyecto: Sprint_0_Marc_Villalba
 // Lenguaje: PHP
 // Curso: 3ºGTI
+// Fecha: 13/10/2026
 // =====================================
 
 
@@ -12,9 +13,10 @@
 //
 // QUE ES ESTO: un puntero, nada mas.
 //
-// El endpoint rest/guardarMedicion.php (PROMPT 3) busca la logica de
-// negocio en logica/guardarMedicion.php, y este fichero no es el que la
-// tiene: esta en logica/LogicaDeNegocio.php, junto a recuperarMedicion().
+// El endpoint src/communication/guardarMedicion.php (PROMPT 3) carga la
+// logica de negocio desde src/business_logic/guardarMedicion.php, y este
+// fichero no es el que la tiene: esta en LogicaDeNegocio.php, junto a
+// recuperarMedicion().
 //
 // Los dos van en el mismo fichero a proposito, porque son las dos caras
 // de la misma logica (guardar y recuperar) y comparten la conexion, el

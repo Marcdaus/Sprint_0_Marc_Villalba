@@ -6,66 +6,60 @@
 ## Component Design
 
 La lógica de negocio del frontend es el **intermediario** entre la interfaz
-(`gui/`) y el servidor REST (`communication/`). Expone a la interfaz un subconjunto
-de la lógica de negocio del servidor, con **firmas idénticas**: una operación de
-lectura de mediciones.
+(`gui/`) y el servidor REST (`communication/`). Expone a la interfaz **un
+subconjunto** de la lógica de negocio del servidor, con **firma idéntica**: la
+misma operación de lectura que el backend (`business_logic_design.md`), pero
+implementada como **proxy** (por dentro llama al servicio remoto en vez de tocar la
+base de datos).
 
 ```text
    ---------------------- LógicaFrontend ----------------------
    |
-   |   // operación de SOLO LECTURA (misma firma que el backend)
+   |   // operación de SOLO LECTURA (firma idéntica al backend)
    |
-   |   recuperarMedicion() --> [ Medicion ]            (proxy: pide al servidor)
-   |
-   |   construirURL()        <-- Text                 (compone la dirección)
-   |   adaptarMediciones()   <-- [ Medicion ]         (renombra campos)
-   |   formatearFecha()      <-- Text                 (fecha legible)
+f: FiltroMediciones --> recuperarMedicion() <-- ResultadoLista
    |
    ------------------------------------------------------------
-                    |                     ^
-                    | HTTP (XHR)          | Medicion[]
-                    v                     |
-        src/communication/recuperarMedicion.php
+                |                          ^
+                | HTTP (XHR)               | ResultadoLista
+                v                          |
+    src/communication/recuperarMedicion.php
 ```
 
-### Funciones
+### Método (contrato)
 
-| Función | Tipo | Entrada | Salida | Misión |
-| :--- | :--- | :--- | :--- | :--- |
-| `recuperarMedicion()` | solo lectura (`<--`) | — | `[ Medicion ]` | Pide al servidor la lista de mediciones (proxy) |
-| `construirURL( host, puerto, ruta )` | puro (`--x-->`) | `Text, N, Text` | `Text` | Monta la dirección absoluta del endpoint |
-| `adaptarMediciones( datos )` | puro (`--x-->`) | `[ MedicionServidor ]` | `[ Medicion ]` | Renombra `nombre_emisora→nombre`, `tipo_medicion→tipo`, `valor_medicion→valor` |
-| `formatearFecha( fecha )` | puro (`--x-->`) | `Text` | `Text` | Pasa `aaaa-mm-dd hh:mm:ss` a formato legible |
+| Método | Tipo | Entrada | Salida |
+| :--- | :--- | :--- | :--- |
+| `recuperarMedicion( f )` | solo lectura (`<--`) | `FiltroMediciones` | `ResultadoLista` |
+
+`FiltroMediciones` y `ResultadoLista` son los **mismos tipos de dominio** definidos en
+`business_logic_design.md`; el cliente no inventa tipos nuevos.
 
 ### Identidad de firma con el backend
 
-La operación de lectura del frontend coincide con la del backend
-(`business_logic_design.md`), aplicando la **regla del subconjunto** (el cliente
-expone igual o menos, nunca más) y la **regla del proxy** (la implementación
-llama al servicio remoto en vez de tocar la base de datos):
-
 ```text
    BACKEND  (business_logic_design.md):
-      f: FiltroMediciones --> recuperarMedicion() <-- [ Medicion ]
+      f: FiltroMediciones --> recuperarMedicion() <-- ResultadoLista
 
    FRONTEND (este documento):
-      recuperarMedicion() --> [ Medicion ]      // subconjunto sin filtros; proxy HTTP
+      f: FiltroMediciones --> recuperarMedicion() <-- ResultadoLista   // MISMA firma
 ```
 
-`Medicion` es el **mismo tipo lógico** en ambos lados. El cliente no usa
-`FiltroMediciones` (es un subconjunto) y obtiene los datos por HTTP del endpoint
-`src/communication/recuperarMedicion.php`.
+Por la **regla del subconjunto**, el cliente solo declara las operaciones que usa la
+interfaz (aquí, la lectura); por la **regla del proxy**, la implementación llama al
+endpoint `src/communication/recuperarMedicion.php` en vez de a la base de datos.
 
-### Flujo de datos
+### Flujo de datos (proxy)
 
 ```text
-   construirURL( HOST, PUERTO, RUTA_RECUPERAR ) --> url: Text
+   recuperarMedicion( f )
         |
-   XHR GET url  --> { "mediciones": [ {id, nombre_emisora, tipo_medicion, valor_medicion, fecha} ] }
-        |
-   adaptarMediciones( mediciones ) --> [ {id, nombre, tipo, valor, fecha} ]
-        |
-   formatearFecha( fecha ) --> texto legible  ->  (se pinta en gui/)
+        | 1. montar la dirección con las constantes de configuracion.js
+        | 2. GET (XHR) a src/communication/recuperarMedicion.php
+        |       -> { "mediciones": [ {nombre_emisora, tipo_medicion, valor_medicion, fecha} ] }
+        | 3. adaptar los campos (nombre_emisora->nombre, tipo_medicion->tipo, valor_medicion->valor)
+        |       -> ResultadoLista( ok=true, mediciones )
+        | 4. (red caída / error del servidor) -> ResultadoLista( ok=false, error )
 ```
 
 ### Configuración
@@ -77,12 +71,16 @@ llama al servicio remoto en vez de tocar la base de datos):
 
 - El frontend expone **solo lectura**: no hay `guardarMedicion()` en el cliente,
   porque la subida de mediciones la hace la app Android.
-- Las funciones puras (`construirURL`, `adaptarMediciones`, `formatearFecha`) no
-  hacen red: se pueden probar con Node sin servidor.
-- `recuperarMedicion()` usa `XMLHttpRequest`; es la única función que habla con el
-  servidor.
-- Los ficheros `diHola.js` y `hacerLogin.js` son **legado** de un tutorial: no
-  forman parte del subconjunto de negocio del proyecto.
+- `recuperarMedicion( f )` encapsula toda la comunicación: es el **único** método del
+  contrato y el único que usa `XMLHttpRequest`. La interfaz (`gui/`) nunca habla con
+  la red.
+- Las funciones `construirURL()`, `adaptarMediciones()` y `formatearFecha()` son
+  **detalles de implementación**, no forman parte del contrato (igual que las
+  funciones auxiliares del backend). Son puras, no hacen red y se pueden probar con
+  Node sin servidor.
+- El resultado se entrega a la interfaz con los **mismos campos de dominio** del
+  backend (`ok`, `mediciones`, `error`, `clase`); renombrar los campos de la tabla
+  concreta es un detalle interno del proxy.
 
 ## General Rules
 

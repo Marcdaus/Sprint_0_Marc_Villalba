@@ -13,7 +13,7 @@ servidor directamente.
 
 | Pantalla | Fichero | Descripción |
 | :--- | :--- | :--- |
-| **Listado de mediciones** | `index.html` | Tabla de las últimas mediciones con 5 columnas: **id, nombre, tipo, valor, fecha** |
+| **Listado de mediciones** | `index.html` | Tabla de las últimas mediciones con 4 columnas: **tipo, valor, nombre, fecha** |
 | **Login legacy** | `Aplicacion.html` | Pantalla de ejemplo del tutorial (no forma parte del flujo real) |
 
 ### Elementos de presentación
@@ -23,13 +23,13 @@ servidor directamente.
 |                                                                  |
 |   Título: "Mediciones del proyecto"                              |
 |   -----------------------------------------------------------------
-|   | id | nombre | tipo | valor | fecha |    <- tabla de mediciones
+|   | nombre | tipo | valor | fecha |    <- tabla de mediciones
 |   -----------------------------------------------------------------
 |                                                                  |
 |   (se recarga al pulsar el botón "Actualizar")                   |
 --------------------------------------------------------------------
         ^
-        |  datos ya adaptados ( Medicion: id, nombre, tipo, valor, fecha )
+        |  datos ya adaptados ( Medicion: nombre, tipo, valor, fecha )
         |
    frontend_business_logic/consultarMediciones.js
 ```
@@ -54,7 +54,8 @@ servidor directamente.
 
 - `index.html` carga la lógica del frontend con rutas relativas
   (`../frontend_business_logic/*.js`) porque vive en `src/gui/`.
-- La columna `id` muestra el identificador real de la base de datos.
+- La tabla **no tiene columna `id`**: la clave de cada fila es la natural compuesta
+  `(nombre_emisora, fecha)`, y la web no la enseña.
 - `Aplicacion.html` es **legado** del tutorial; se conserva pero no es la pantalla
   del proyecto.
 

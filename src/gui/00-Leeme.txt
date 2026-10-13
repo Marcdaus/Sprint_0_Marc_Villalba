@@ -30,7 +30,7 @@ Pide la lista con consultarMediciones() y la reparte en dos tablas:
       "Ultima medida registrada";
     - todas las demas van debajo, bajo "medidas anteriores".
 
-Cada fila tiene estas cinco columnas: id, Tipo, Valor, nombre_emisora y
+Cada fila tiene estas cuatro columnas: Tipo, Valor, nombre_emisora y
 Fecha y Hora. La columna "Valor" pinta el valor del proyecto tal cual
 llega, sin sufijos.
 
@@ -104,14 +104,14 @@ El servidor manda nombres de tabla y la web usa otros. El mapa es:
 
     servidor            web
     ------------------  ----------------
-    id                  id
     nombre_emisora      nombre
     tipo_medicion       tipo
     valor_medicion      valor
     fecha               fecha   (en texto, tal cual)
 
-Fíjate en que el "id" ahora también lo manda el servidor (se añadió en el
-PROMPT 6, antes no salía), porque la tabla lo enseña.
+La tabla ya NO tiene una columna "id": la clave de cada fila la forman
+nombre_emisora y fecha (la cambió el profesor). Por eso no hay fila "id"
+en el mapa ni en las tablas de abajo.
 
 ----------------------------------------------------------------------
 4. LO QUE VIENE EN LA LISTA
@@ -123,12 +123,12 @@ medida registrada y el resto son las anteriores. El servidor manda las
 El diseño que se pidió es este:
 
     Última medida registrada
-      id | Tipo   | Valor | nombre_emisora | Fecha y Hora
-       1 | prueba | 1234  | GTI-3A         | 26/09/2026 12:34
+      Tipo   | Valor | nombre_emisora | Fecha y Hora
+      prueba | 1234  | GTI-3A         | 26/09/2026 12:34
 
     medidas anteriores
-      id | Tipo   | Valor | nombre_emisora | Fecha y Hora
-       2 | prueba | 1234  | GTI-3A         | 26/09/2026 12:34
+      Tipo   | Valor | nombre_emisora | Fecha y Hora
+      prueba | 1234  | GTI-3A         | 26/09/2026 12:34
        ...
 
 O sea: la primera fila va aparte y las demás en otra tabla. La columna

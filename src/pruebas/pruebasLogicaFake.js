@@ -3,6 +3,7 @@
 // Proyecto: Sprint_0_Marc_Villalba
 // Lenguaje: JavaScript
 // Curso: 3ºGTI
+// Fecha: 13/10/2026
 // =====================================
 
 // ===========================================================================
@@ -157,7 +158,6 @@ function consultar( preparar ) {
 // una medicion tal cual la manda el servidor
 function medicionDelServidor() {
 	return {
-		id: 1,
 		nombre_emisora: "GTI-3A",
 		tipo_medicion: "prueba",
 		valor_medicion: 1234,
@@ -186,12 +186,12 @@ console.log( "adaptarMediciones" );
 const adaptada = logica.adaptarMediciones( [ medicionDelServidor() ] );
 
 comprobarIgual( Object.keys( adaptada[0] ).sort(),
-	[ "fecha", "id", "nombre", "tipo", "valor" ],
+	[ "fecha", "nombre", "tipo", "valor" ],
 	"los campos del servidor se renombran (nombre_emisora -> nombre, tipo_medicion -> tipo, valor_medicion -> valor)"
 );
 
 comprobar( adaptada[0].nombre === "GTI-3A", "el nombre de la emisora se copia" );
-comprobar( adaptada[0].id === 1, "el id se copia" );
+comprobar( ! ( "id" in adaptada[0] ), "la medicion ya no trae id (clave: nombre_emisora + fecha)" );
 comprobar( adaptada[0].tipo === "prueba", "el tipo de medicion se copia" );
 
 comprobar( adaptada[0].valor === 1234,
@@ -251,8 +251,8 @@ comprobar( r200.error === null, "con 200 no se llama al callback de error" );
 comprobar( r200.exito !== null && r200.exito.length === 1, "con 200 llegan las mediciones" );
 comprobar( r200.exito !== null && r200.exito[0].nombre === "GTI-3A",
 	"con 200 las mediciones llegan YA ADAPTADAS (nombre, no nombre_emisora)" );
-comprobar( r200.exito !== null && r200.exito[0].id === 1,
-	"con 200 llega tambien el id, que la web pinta en la primera columna" );
+comprobar( r200.exito !== null && ! ( "id" in r200.exito[0] ),
+	"con 200 la medicion ya no trae id (la clave la forman nombre_emisora y fecha)" );
 
 const r500 = consultar( function () {
 	servidorContesta( 500, JSON.stringify( { error: "MySQL esta apagado" } ) );
@@ -334,7 +334,7 @@ process.exitCode = ( fallos === 0 ) ? 0 : 1;
 //
 // Que NO se prueba (es del PROMPT 7, aqui no hay nada que mirar):
 //
-//   que se pinte la tabla con sus columnas id, Tipo, Valor, nombre_emisora
+//   que se pinte la tabla con sus columnas Tipo, Valor, nombre_emisora
 //   y Fecha y Hora, ni la cabecera "Ultima medida registrada" ni el
 //   separador "medidas anteriores". Esta logica no sabe nada del DOM.
 //
