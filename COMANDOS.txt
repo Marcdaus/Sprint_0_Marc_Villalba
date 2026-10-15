@@ -2,18 +2,6 @@
  COMANDOS DEL PROYECTO  (Sprint_0_Marc_Villalba)
 ========================================
 
-ESTRUCTURA
-  doc/     los disenos  (xxx_design.md)
-  src/     el codigo, por componente:
-             communication/            endpoints REST (PHP)
-             business_logic/           logica de negocio (PHP)
-             database/                 DDL (SQL)
-             frontend_business_logic/  logica del cliente web (JS)
-             gui/                      paginas web (HTML/CSS)
-             pruebas/                  pruebas (PHP y JS)
-             android/                  app Android (Java)
-             arduino/                  sketch Arduino (C++)
-
 ========================================
 
 ARRANCAR SERVIDOR (PHP)
@@ -25,7 +13,7 @@ ARRANCAR SERVIDOR (PHP)
 PARAR SERVIDOR
   Ctrl + C
 
-LIMPIAR BASE DE DATOS (borra todas las mediciones)
+LIMPIAR BASE DE DATOS (borra todas las mediciones y reinicia el id)
   C:\xampp\mysql\bin\mysql.exe -u root proyecto_beacon -e "TRUNCATE TABLE mediciones;"
 
 ARRANCAR PHPMYADMIN
@@ -55,32 +43,20 @@ PRUEBAS  (ejecutar desde la raiz del proyecto)
 
   Logica de negocio (NO necesita MySQL ni servidor):
     C:\xampp\php\php.exe -f src\pruebas\testLogicaDeNegocio.php
-    -> tiene que decir "66 pruebas, 0 fallos"
+    -> tiene que decir "60 pruebas, 0 fallos"
 
   Base de datos (necesita MySQL encendido; usa proyecto_beacon_test, no la real):
     C:\xampp\php\php.exe -f src\pruebas\testBaseDeDatos.php
-    -> tiene que decir "28 pruebas, 0 fallos"
-
-  Auxiliares de comunicacion (NO necesita MySQL ni servidor):
-    C:\xampp\php\php.exe -f src\pruebas\testAuxiliaresRest.php
-    -> tiene que decir "19 pruebas, 0 fallos"
+    -> tiene que decir "29 pruebas, 0 fallos"
 
   Logica del cliente web (necesita Node):
     "C:\Program Files\nodejs\node.exe" src\pruebas\pruebasLogicaFake.js
     -> tiene que decir "33 pruebas, 0 fallos"
 
-  Endpoints REST por HTTP (necesita el servidor arrancado, en otra consola, y MySQL):
+  Endpoints REST por HTTP (necesita el servidor arrancado, en otra consola):
     C:\xampp\php\php.exe -f src\pruebas\testEndpointsRest.php
 
-  App Android: pruebas de HOST (no necesitan telefono):
-    cd src\android\BTLMARC
-    gradlew.bat :app:testDebugUnitTest
-    -> corre MedicionTest y LogicaFakeAppTest (logica pura)
-
-  App Android: prueba INSTRUMENTADA (necesita telefono/emulador):
-    cd src\android\BTLMARC
-    gradlew.bat :app:connectedDebugAndroidTest
-    -> corre LogicaFakeAppInstrumentedTest (guardado con PeticionarioREST falso)
+  Nota: src\pruebas\testAuxiliaresRest.php NO funciona (ver 00-Leeme.txt de communication).
 
 ----------------------------------------
 
@@ -89,14 +65,12 @@ COMPROBAR SINTAXIS
   PHP:
     C:\xampp\php\php.exe -l src\communication\guardarMedicion.php
     C:\xampp\php\php.exe -l src\communication\recuperarMedicion.php
-    C:\xampp\php\php.exe -l src\communication\auxiliares.php
     C:\xampp\php\php.exe -l src\business_logic\LogicaDeNegocio.php
     C:\xampp\php\php.exe -l src\business_logic\configuracion.php
     C:\xampp\php\php.exe -l src\business_logic\guardarMedicion.php
     C:\xampp\php\php.exe -l src\business_logic\recuperarMedicion.php
     C:\xampp\php\php.exe -l src\pruebas\testLogicaDeNegocio.php
     C:\xampp\php\php.exe -l src\pruebas\testBaseDeDatos.php
-    C:\xampp\php\php.exe -l src\pruebas\testAuxiliaresRest.php
 
   JavaScript:
     "C:\Program Files\nodejs\node.exe" --check src\frontend_business_logic\configuracion.js

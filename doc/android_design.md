@@ -121,13 +121,428 @@ guardado); por la **regla del proxy**, la implementación llama al endpoint
    src/communication/guardarMedicion.php --> 200/400/500
 ```
 
-### Configuración
 
-`AnalizadorBeacons` define el bloque `VARIABLES MODIFICABLES` con `UUID_BEACON`,
-`id_plaquita`, `IP_SERVIDOR`, `PUERTO_SERVIDOR`, `RUTA_GUARDAR`
-(`src/communication/guardarMedicion.php`) y `RUTA_RECUPERAR`
-(`src/communication/recuperarMedicion.php`). Es el único punto donde se fija a dónde
-apunta la app.
+### Diseño de clases (notación v3)
+
+Cada clase se dibuja con su caja: los miembros **privados** van dentro de la caja y
+los **públicos** cruzan la pared (`|`). A la izquierda, `-->` apunta al método cuando
+recibe datos y `<--` sale de él cuando devuelve. A la derecha, `-->` indica que el
+método **modifica** el estado, `<--` que solo lo **consulta** y `--x` que es
+**estático** (no usa estado). Entre métodos consecutivos, dos líneas verticales `|`.
+
+#### `AnalizadorBeacons` (utilidad: todo estático, sin estado)
+
+```text
+              --------------- AnalizadorBeacons ---------------
+              |
+              |   COMPANY_ID_APPLE: N
+              |   TAM_UUID: N
+              |   ETIQUETA_LOG: Text
+              |
+              |
+              |
+              |
+resultado: ScanResult --> esNuestroBeacon() --x
+                     B <--
+              |
+              |
+bytesTrama: [ N ] --> esNuestroBeacon() --x
+                     B <--
+              |
+              |
+bytesTrama: [ N ] --> esTramaIBeacon() --x
+                     B <--
+              |
+              |
+resultado: ScanResult --> motivoDescarte() --x
+                     Text <--
+              |
+              |
+tib: TramaIBeacon --> interpretarValor() --x
+                     Z <--
+              |
+              |
+codigo: Z --> tipoDeMedicion() --x
+        Text <--
+              |
+              |
+tib: TramaIBeacon --> tipoDeMedicion() --x
+                     Text <--
+              |
+              |
+m: Medicion --> construirJSON() --x
+           Text <--
+              |
+              |
+nombre: Text, tipo: Text, valor: Z --> construirJSON() --x
+                      Text <--
+              |
+              |
+texto: Text --> escaparTexto() --x
+            Text <--
+              |
+              |
+host, puerto, ruta --> construirURL() --x
+                    Text <--
+              |
+              |
+ahora: Z, ultimoEnvio: Z --> debeEnviarMedicion() --x
+                           B <--
+              |
+              |
+tib: TramaIBeacon --> mostrarTrama() --x
+              |
+              |
+cuerpo: Text --> mostrarJSON() --x
+              |
+              ------------------------------------------------
+```
+
+#### `Medicion` (modelo de dominio)
+
+```text
+                 --------------------- Medicion ---------------------
+                 |
+                 | nombre: Text
+                 | tipoMedicion: Text
+                 | valorMedicion: Z
+                 |
+                 |
+tib: TramaIBeacon, nombre: Text --> Medicion() -->
+                 |
+                 |
+Text <-- getNombre() <--
+                 |
+                 |
+Text <-- getTipoMedicion() <--
+                 |
+                 |
+Z    <-- getValorMedicion() <--
+                 |
+                 ----------------------------------------------------
+```
+
+#### `TramaIBeacon` (interpreta una lectura BLE)
+
+```text
+                 ------------------- TramaIBeacon -------------------
+                 |
+                 | TIPO_MANUFACTURER: N
+                 | COMPANY_ID_APPLE: N
+                 | TAM_DATOS_IBEACON: N
+                 |
+                 | prefijo, uuid, major, minor, losBytes,
+                 | advFlags, advHeader, companyID: [ N ]
+                 | txPower, iBeaconType, iBeaconLength: N
+                 |
+                 |
+bytes: [ N ] --> TramaIBeacon() -->
+                 |
+                 |
+[ N ]_9  <-- getPrefijo() <--
+                 |
+                 |
+[ N ]_16 <-- getUUID() <--
+                 |
+                 |
+[ N ]_2  <-- getMajor() <--
+                 |
+                 |
+[ N ]_2  <-- getMinor() <--
+                 |
+                 |
+N        <-- getTxPower() <--
+                 |
+                 |
+[ N ]    <-- getLosBytes() <--
+                 |
+                 |
+[ N ]_3  <-- getAdvFlags() <--
+                 |
+                 |
+[ N ]_2  <-- getAdvHeader() <--
+                 |
+                 |
+[ N ]_2  <-- getCompanyID() <--
+                 |
+                 |
+N        <-- getiBeaconType() <--
+                 |
+                 |
+N        <-- getiBeaconLength() <--
+                 |
+                 |
+bytes: [ N ] --> buscarEstructuraIBeacon() --x
+                              Z <--
+                 |
+                 |
+bytes: [ N ] --> esTramaIBeacon() --x
+                              B <--
+                 |
+                 ----------------------------------------------------
+```
+
+#### `Utilidades` (utilidad: todo estático)
+
+```text
+                 ---------------------- Utilidades ----------------------
+                 |
+                 |
+texto: Text --> stringToBytes() --x
+               [ Z ] <--
+                 |
+                 |
+uuid: Text --> stringToUUID() --x
+             UUID <--
+                 |
+                 |
+uuid: UUID --> uuidToString() --x
+                   Text <--
+                 |
+                 |
+uuid: UUID --> uuidToHexString() --x
+                   Text <--
+                 |
+                 |
+bytes: [ Z ] --> bytesToString() --x
+                    Text <--
+                 |
+                 |
+mas: N, menos: N --> dosLongToBytes() --x
+                         [ Z ]_16 <--
+                 |
+                 |
+bytes: [ Z ] --> bytesToInt() --x
+                     Z <--
+                 |
+                 |
+b: Z --> leerByteConSigno() --x
+             Z <--
+                 |
+                 |
+bytes: [ Z ] --> bytesToLong() --x
+                      Z <--
+                 |
+                 |
+bytes: [ Z ] --> bytesToIntOK() --x
+                      Z <--
+                 |
+                 |
+bytes: [ Z ] --> bytesToHexString() --x
+                    Text <--
+                 |
+                 ------------------------------------------------------
+```
+
+#### `LogicaFakeApp` (lógica de cliente / proxy)
+
+```text
+                 -------------------- LogicaFakeApp --------------------
+                 |
+                 | METODO_POST: Text
+                 |
+                 | CLASE_VALIDACION: Text
+                 | CLASE_PERSISTENCIA: Text
+                 |
+                 |
+m: Medicion, respuesta: RespuestaApp --> guardarMedicion() -->   
+                 |
+                 |  
+                 |
+m: Medicion --> construirPeticion() --x
+            Peticion <--
+                 |
+                 |
+codigo: Z, cuerpo: Text --> interpretarRespuesta() --x
+                         ResultadoGuardado <--
+                 |
+                 |
+cuerpo: Text --> leerError() --x
+                  Text <--
+                 |
+                 |
+respuesta, resultado --> avisar() --x
+                 |
+                 |
+                 --> crearPeticionarioREST() --x
+                            PeticionarioREST <--
+                 |
+                 ------------------------------------------------------
+```
+
+
+#### `PeticionarioREST` (extiende `AsyncTask`)
+
+```text
+                 -------------------- PeticionarioREST --------------------
+                 |
+                 | elMetodo: Text
+                 | urlDestino: Text
+                 | elCuerpo: Text
+                 | laRespuesta: RespuestaREST
+                 | codigoRespuesta: Z
+                 | cuerpoRespuesta: Text
+                 |
+                 |
+codigo: Z, cuerpo: Text --> callback() -->              
+                 |
+                 |
+                 --> PeticionarioREST() -->
+                 |
+                 |
+metodo, url, cuerpo, respuesta --> hacerPeticionREST() -->
+                 |
+                 |
+                 --> doInBackground() -->
+                          B <--
+                 |
+                 |
+comoFue: B --> onPostExecute() -->
+                 |
+                 --------------------------------------------------------
+```
+
+#### `ServicioEscuharBeacons` (extiende `IntentService`)
+
+```text
+                 ---------------- ServicioEscuharBeacons ----------------
+                 |
+                 | ETIQUETA_LOG: Text
+                 | observadorDeTrama: ObservadorDeTrama
+                 |
+                 | respuestaDelGuardado: RespuestaApp
+                 | logicaFakeApp: LogicaFakeApp
+                 | tiempoDeEspera: N
+                 | instanteUltimoEnvio: N
+                 | seguir: B
+                 | elEscanner: BluetoothLeScanner
+                 | callbackDelEscaneo: ScanCallback
+                 |
+                 |
+texto: Text --> mostrarEnPantalla() -->                 
+                 |
+                 |
+                 --> ServicioEscuharBeacons() -->
+                 |
+                 |
+observador: ObservadorDeTrama --> setObservadorDeTrama() --x
+                 |
+                 |
+                 --> parar() -->
+                 |
+                 |
+                 --> onDestroy() -->
+                 |
+                 |
+intencion: Intencion --> onHandleIntent() -->
+                 |
+                 |
+resultado: ScanResult --> manejarBeaconRecibido() -->
+                 |
+                 |
+texto: Text --> mostrarEnPantalla() -->
+                 |
+                 |
+                 --> crearLogicaApp() --x
+                        LogicaFakeApp <--
+                 |
+                 |
+                 --> iniciarEscuchaBTLE() -->
+                 |
+                 |
+                 --> detenerEscuchaBTLE() -->
+                 |
+                 |
+elAdaptador: BluetoothAdapter --> estaEncendido() --x
+                                        B <--
+                 |
+                 |
+                 --> obtenerAdaptador() --x
+                     BluetoothAdapter <--
+                 |
+                 --------------------------------------------------------
+```
+
+#### `MainActivity` (extiende `AppCompatActivity`)
+
+```text
+                 -------------------- MainActivity --------------------
+                 |
+                 | ETIQUETA_LOG: Text
+                 | CODIGO_PETICION_PERMISOS: N
+                 | PERMISOS_NECESARIOS: [ Text ]
+                 | METODO_GET: Text
+                 |
+                 | elEscanner: BluetoothLeScanner
+                 | callbackDelEscaneo: ScanCallback
+                 | contadorResultados: Z
+                 | elIntentDelServicio: Intent
+                 | textoEstadoPermisos, textoUltimaTrama, textoRespuestaRest: TextView
+                 | observador: ObservadorDeTrama
+                 |
+                 |
+v: View --> botonArrancarServicioPulsado() -->
+                 |
+                 |
+v: View --> botonDetenerServicioPulsado() -->
+                 |
+                 |
+v: View --> botonBuscarDispositivosBTLEPulsado() -->
+                 |
+                 |
+v: View --> botonBuscarNuestroDispositivoBTLEPulsado() -->
+                 |
+                 |
+v: View --> botonDetenerBusquedaDispositivosBTLEPulsado() -->
+                 |
+                 |
+v: View --> botonProbarRestPulsado() -->
+                 |
+                 |
+estado: EstadoActividad --> onCreate() -->
+                 |
+                 |
+                 --> onDestroy() -->
+                 |
+                 |
+requestCode, permisos, concesiones --> onRequestPermissionsResult() -->
+                 |
+                 |
+                 --> buscarTodosLosDispositivosBTLE() -->
+                 |
+                 |
+nombre: Text --> buscarEsteDispositivoBTLE() -->
+                 |
+                 |
+                 --> detenerBusquedaDispositivosBTLE() -->
+                 |
+                 |
+resultado: ScanResult --> mostrarInformacionDispositivoBTLE() <--
+                 |
+                 |
+dispositivo: BluetoothDevice --> nombreSeguro() <-- Text
+                 |
+                 |
+dispositivo: BluetoothDevice --> direccionSegura() <-- Text
+                 |
+                 |
+                 --> pidePermisosSiFaltan() -->
+                          B <--
+                 |
+                 |
+                 --> faltanPermisos() --x
+                          B <--
+                 |
+                 |
+                 --> obtenerEscaner() --x
+                        BluetoothLeScanner <--
+                 |
+                 |
+                 --> estaElBluetoothEncendido() --x
+                          B <--
+                 |
+                 --------------------------------------------------------
+```
 
 ## Design Clarifications
 

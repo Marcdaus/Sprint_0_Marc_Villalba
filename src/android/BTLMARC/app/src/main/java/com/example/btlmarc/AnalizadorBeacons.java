@@ -30,7 +30,7 @@ public class AnalizadorBeacons {
     // casa, y el router la puede cambiar (cada vez que se reinicia, por
     // ejemplo). Hay que mirarla en el PC antes de la demo. En Windows:
     // "ipconfig" y buscar IPv4.
-    public static final String IP_SERVIDOR     = "10.38.125.39";
+    public static final String IP_SERVIDOR     = "192.168.18.14";
 
     public static final int    PUERTO_SERVIDOR = 8080;                    // puerto del servidor REST
     // La ruta lleva "src/communication/" delante porque el servidor PHP se

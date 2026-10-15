@@ -322,7 +322,7 @@ public:
   } // ()
 
   // .........................................................
-  // connHandle: N --> getConexion() -->
+  // connHandle: N --> getConexion() <--
   // Conexion <--
   // .........................................................
   BLEConnection * getConexion( uint16_t connHandle ) {

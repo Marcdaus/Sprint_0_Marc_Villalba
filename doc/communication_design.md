@@ -85,6 +85,48 @@ fichero que **solo define funciones** (no atiende peticiones), para poder probar
 sin ejecutar un endpoint. El volcado de la respuesta (código + JSON) se hace inline en
 cada endpoint. Las funciones de la capa de negocio no aparecen aquí.
 
+### Diseño de funciones (notación v3)
+
+La capa de comunicación no define clases: son **endpoints** (ficheros `.php` que
+atienden una petición) y **funciones auxiliares**. A la izquierda, `-->` apunta a la
+función cuando recibe datos y `<--` sale de ella cuando devuelve.
+
+```text
+                 -------------- guardarMedicion.php --------------    // endpoint POST
+                 |
+                 |
+cuerpo JSON --> guardarMedicion() --> respuesta HTTP   
+                 |
+                 --------------------------------------------------
+
+
+                 -------------- recuperarMedicion.php -------------    // endpoint GET
+                 |
+                 |
+query GET --> recuperarMedicion() --> respuesta HTTP    
+                 |
+                 --------------------------------------------------
+```
+
+```text
+                 ------------------ auxiliares.php ------------------
+                 |
+                 |
+cuerpo: Text --> parsearJSON() --> Medicion?
+                 |
+                 |
+query: [ Key: Text ] --> extraerFiltros() --> FiltroMediciones
+                 |
+                 ---------------------------------------------------
+```
+
+| Función | Tipo | Entrada | Salida |
+| :--- | :--- | :--- | :--- |
+| `guardarMedicion()` (endpoint `POST`) | endpoint | cuerpo JSON | respuesta HTTP (`200`/`400`/`500`/`405`) |
+| `recuperarMedicion()` (endpoint `GET`) | endpoint | query `GET` | respuesta HTTP (`200`/`500`/`405`) |
+| `parsearJSON()` | pura (`--x`) | `cuerpo: Text` | `Medicion` o `null` |
+| `extraerFiltros()` | pura (`--x`) | `query: [ Key: Text ]` | `FiltroMediciones` |
+
 ## Design Clarifications
 
 - Cada fichero `.php` de `communication/` es un **endpoint autónomo**: arranca, hace
@@ -98,13 +140,3 @@ cada endpoint. Las funciones de la capa de negocio no aparecen aquí.
 - Las rutas son relativas a la raíz del servidor (`Sprint_0_Marc_Villalba`), por eso
   empiezan por `src/communication/`.
 
-## General Rules
-
-- **Programming Language:** PHP 8 (sin frameworks); salida en JSON.
-- **Function/Method Headers:** cada endpoint y función auxiliar documenta su diseño
-  lógico en un bloque de comentario delimitado por líneas discontinuas
-  (`--------------------`): `entrada --> funcion() --> salida`.
-- **Code Readability:** código claro y autoexplicativo; comentarios inline mínimos.
-- **Automated Testing:** pruebas de las funciones auxiliares de comunicación
-  (`testAuxiliaresRest.php`) y pruebas de los endpoints HTTP reales
-  (`testEndpointsRest.php`), que arrancan el servidor y comprueban códigos y cuerpos.

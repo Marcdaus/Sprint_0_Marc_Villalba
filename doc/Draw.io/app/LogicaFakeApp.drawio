@@ -1,0 +1,37 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="frJ_Eikfg81IeD4nYvVX">
+    <mxGraphModel dx="976" dy="772" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="P4VDjQuNxxHYiNzKy5Z7-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" value="" vertex="1">
+          <mxGeometry height="501" width="379.63" x="260.37" y="139" as="geometry" />
+        </mxCell>
+        <mxCell id="P4VDjQuNxxHYiNzKy5Z7-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82b366;gradientColor=none;" value="&lt;pre style=&quot;font-family: &amp;quot;JetBrains Mono&amp;quot;, monospace;&quot;&gt;&lt;pre style=&quot;font-family: &amp;quot;JetBrains Mono&amp;quot;, monospace;&quot;&gt;&lt;span style=&quot;color: rgb(2, 2, 2);&quot;&gt;&lt;font style=&quot;font-size: 15px;&quot;&gt;LogicaFakeApp&lt;br&gt;&lt;/font&gt;&lt;/span&gt;&lt;/pre&gt;&lt;/pre&gt;" vertex="1">
+          <mxGeometry height="50" width="222.13" x="337.87" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="P4VDjQuNxxHYiNzKy5Z7-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82b366;" value="&lt;p&gt;m: &lt;strong&gt;Medicion&lt;/strong&gt;, respuesta: &lt;strong&gt;RespuestaApp&lt;/strong&gt; → guardarMedicion() →&lt;/p&gt;" vertex="1">
+          <mxGeometry height="61" width="292.87" x="85" y="181" as="geometry" />
+        </mxCell>
+        <mxCell id="d3UxuTmfDCsAyg33lQ9l-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82b366;" value="&lt;p&gt;respuesta, resultado → avisar() --✕&lt;/p&gt;" vertex="1">
+          <mxGeometry height="41" width="247.87" x="130" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="JjOXjNHyTC71dE68MXPt-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82b366;" value="&lt;p&gt;m: &lt;strong&gt;Medicion&lt;/strong&gt; → construirPeticion() --✕&lt;br&gt;&lt;strong&gt;Peticion&lt;/strong&gt; ←&lt;/p&gt;" vertex="1">
+          <mxGeometry height="50" width="292.87" x="85" y="262" as="geometry" />
+        </mxCell>
+        <mxCell id="JjOXjNHyTC71dE68MXPt-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82b366;" value="codigo: &lt;strong&gt;Z&lt;/strong&gt;, cuerpo: &lt;strong&gt;Text&lt;/strong&gt; → interpretarRespuesta() --✕&lt;br&gt;&lt;strong&gt;ResultadoGuardado&lt;/strong&gt; ←" vertex="1">
+          <mxGeometry height="50" width="292.87" x="85" y="334" as="geometry" />
+        </mxCell>
+        <mxCell id="JjOXjNHyTC71dE68MXPt-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#d79b00;dashed=1;dashPattern=8 8;" value="&lt;p dir=&quot;ltr&quot;&gt;METODO_POST: &lt;strong&gt;Text&lt;/strong&gt;&lt;/p&gt;&lt;p dir=&quot;ltr&quot;&gt;CLASE_VALIDACION: &lt;strong&gt;Text&lt;/strong&gt;&lt;br&gt;CLASE_PERSISTENCIA: &lt;strong&gt;Text&lt;/strong&gt;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="72" width="189.82" x="425" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="JjOXjNHyTC71dE68MXPt-5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82b366;" value="cuerpo: &lt;strong&gt;Text&lt;/strong&gt; → leerError() --✕&lt;br&gt;&lt;strong&gt;Text&lt;/strong&gt; ←" vertex="1">
+          <mxGeometry height="50" width="237.87" x="140" y="405" as="geometry" />
+        </mxCell>
+        <mxCell id="JjOXjNHyTC71dE68MXPt-7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82b366;" value="&lt;p&gt;→ crearPeticionarioREST() --✕&lt;br&gt;&lt;strong&gt;PeticionarioREST&lt;/strong&gt; ←&lt;/p&gt;" vertex="1">
+          <mxGeometry height="41" width="237.87" x="140" y="540" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

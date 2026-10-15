@@ -50,6 +50,45 @@ servidor directamente.
 | `Tiempo` | texto de fecha ya formateado |
 | `[ Medicion ]` | filas (`<tr>`) de la tabla |
 
+### Diseño de las funciones de pintado (notación v3)
+
+La GUI no define clases: solo **funciones de pintado** en `index.html`. Ninguna habla
+con la red: usan lo que les entrega `consultarMediciones()`. A la izquierda, `-->`
+apunta a la función cuando recibe datos y `<--` sale de ella cuando devuelve.
+
+```text
+                 ------------------ index.html (pintado) ------------------
+                 |
+                 |
+texto: Text --> aviso() -->                    // escribe el <p id="estado">
+                 |
+                 |
+valor: Text --> celda() --> td                 // una celda; null/undefined -> vacío
+                 |
+                 |
+cuerpo: tbody, medicion: Medicion Vista --> pintarFila() -->
+                 |
+                 |
+lista: [ Medicion Vista ] --> pintarMediciones() -->
+                 |
+                 |
+mensaje: Text --> pintarError() -->
+                 |
+                 |
+                 --> iniciar() -->              // al cargar: pide la lista al prompt 6
+                 |
+                 ---------------------------------------------------
+```
+
+| Función | Tipo | Entrada | Salida |
+| :--- | :--- | :--- | :--- |
+| `aviso()` | pintado (`-->`) | `texto: Text` | — (escribe en el `<p id="estado">`) |
+| `celda()` | pintado (`-->`) | `valor: Text` | `td` |
+| `pintarFila()` | pintado (`-->`) | `cuerpo: tbody, medicion: Medicion Vista` | — |
+| `pintarMediciones()` | pintado (`-->`) | `lista: [ Medicion Vista ]` | — |
+| `pintarError()` | pintado (`-->`) | `mensaje: Text` | — |
+| `iniciar()` | arranque (`-->`) | — | — (llama a `consultarMediciones()`) |
+
 ## Design Clarifications
 
 - `index.html` carga la lógica del frontend con rutas relativas

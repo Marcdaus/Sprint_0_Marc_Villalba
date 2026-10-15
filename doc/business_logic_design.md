@@ -38,13 +38,13 @@ ClaseError = { VALIDACION = 'validacion', PERSISTENCIA = 'persistencia' }
 ```text
                ------------------- LogicaDeNegocio -------------------
                |
-               |   // única función que ESCRIBE (hace INSERT)
+               |   
                |
 m: Medicion --> guardarMedicion() --> ResultadoGuardado
                |      (valida RN1..RN2; INSERT INTO mediciones; la BD pone la fecha, RN3)
                |
                |
-               |   // función de SOLO LECTURA (hace SELECT)
+               |  
                |
 f: FiltroMediciones --> recuperarMedicion() <-- ResultadoLista
                |      (SELECT ... ORDER BY fecha DESC LIMIT 50)
@@ -57,7 +57,45 @@ f: FiltroMediciones --> recuperarMedicion() <-- ResultadoLista
 | `guardarMedicion()` | mutante (`-->`) | Escribe en la base de datos (INSERT) |
 | `recuperarMedicion()` | solo lectura (`<--`) | Solo SELECT, no modifica nada |
 
-### 3. Reglas de negocio (RN)
+### 3. Diseño de las funciones (notación v3)
+
+`LogicaDeNegocio.php` no define clases: es un **módulo de funciones**. Las dos
+públicas (contrato) son `guardarMedicion()` y `recuperarMedicion()`; las demás son
+**internas** (detalles de implementación, en PHP plano no existen las funciones
+privadas). A la izquierda, `-->` apunta a la función cuando recibe datos y `<--` sale
+de ella cuando devuelve.
+
+```text
+                 ------------------- LogicaDeNegocio -------------------
+                 |
+                 |  
+                 |
+                 |   conexionBD() --
+                 |   validaMedicion( m ) --
+                 |   limitesDeFecha( desde, hasta ) --
+                 |   resultadoGuardado( ok, error, clase ) --
+                 |   resultadoLista( ok, mediciones, error, clase ) --
+                 |
+                 |
+m: Medicion --> guardarMedicion() --> ResultadoGuardado      
+                 |
+                 |
+f: FiltroMediciones --> recuperarMedicion() <-- ResultadoLista  
+                 |
+                 ------------------------------------------------------
+```
+
+| Función | Tipo | Entrada | Salida |
+| :--- | :--- | :--- | :--- |
+| `guardarMedicion()` | mutante (`-->`) | `m: Medicion` | `ResultadoGuardado` |
+| `recuperarMedicion()` | solo lectura (`<--`) | `f: FiltroMediciones` | `ResultadoLista` |
+| `conexionBD()` | interna (`--x`) | — | `PDO` |
+| `validaMedicion()` | interna (`--x`) | `m: Medicion` | `( ok: B, motivo: Text? )` |
+| `limitesDeFecha()` | interna (`--x`) | `desde: Text?, hasta: Text?` | `( desde: Text?, hasta: Text? )` |
+| `resultadoGuardado()` | interna (`--x`) | `ok: B, error: Text?, clase: Text?` | `ResultadoGuardado` |
+| `resultadoLista()` | interna (`--x`) | `ok: B, mediciones: [ Medicion ], error: Text?, clase: Text?` | `ResultadoLista` |
+
+### 4. Reglas de negocio (RN)
 
 | Regla | Descripción | Dónde se aplica |
 | :--- | :--- | :--- |
@@ -67,7 +105,7 @@ f: FiltroMediciones --> recuperarMedicion() <-- ResultadoLista
 | **RN4** | Subir y consultar mediciones son operaciones públicas (sin sesión ni login) | ambas funciones |
 | **RN5** | Ante un dato inválido o un fallo de la base de datos se devuelve un resultado de error de dominio | ambas funciones |
 
-### 4. Composición interna
+### 5. Composición interna
 
 ```text
 m: Medicion --> guardarMedicion() --> ResultadoGuardado
@@ -92,7 +130,7 @@ f: FiltroMediciones --> recuperarMedicion() --> ResultadoLista
                 |        (fallo de BD -> ResultadoLista( ok=false, clase='persistencia', error ))
 ```
 
-### 5. Alineación con el diseño de la base de datos
+### 6. Alineación con el diseño de la base de datos
 
 Esta capa es la única que accede a la base de datos, y lo hace ajustándose
 exactamente a `database_design.md` (tabla `mediciones`):

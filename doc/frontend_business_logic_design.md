@@ -15,7 +15,6 @@ base de datos).
 ```text
    ---------------------- LógicaFrontend ----------------------
    |
-   |   // operación de SOLO LECTURA (firma idéntica al backend)
    |
 f: FiltroMediciones --> recuperarMedicion() <-- ResultadoLista
    |
@@ -42,7 +41,7 @@ f: FiltroMediciones --> recuperarMedicion() <-- ResultadoLista
       f: FiltroMediciones --> recuperarMedicion() <-- ResultadoLista
 
    FRONTEND (este documento):
-      f: FiltroMediciones --> recuperarMedicion() <-- ResultadoLista   // MISMA firma
+      f: FiltroMediciones --> recuperarMedicion() <-- ResultadoLista   
 ```
 
 Por la **regla del subconjunto**, el cliente solo declara las operaciones que usa la
@@ -67,6 +66,44 @@ endpoint `src/communication/recuperarMedicion.php` en vez de a la base de datos.
 `configuracion.js` es el **único punto** donde se fijan las constantes de conexión:
 `HOST`, `PUERTO` y `RUTA_RECUPERAR` (`"src/communication/recuperarMedicion.php"`).
 
+### Diseño de funciones (notación v3)
+
+La lógica de negocio del frontend no define clases: es un **módulo de funciones**. La
+que habla con el servidor es `consultarMediciones()` (implementa, como *proxy*, la
+operación de dominio `recuperarMedicion()` del backend y entrega su resultado por
+callbacks). Las demás son **internas** (detalles de implementación). A la izquierda,
+`-->` apunta a la función cuando recibe datos y `<--` sale de ella cuando devuelve.
+
+```text
+                 -------------- frontend_business_logic --------------
+                 |
+                 |   // funciones INTERNAS (no forman parte del contrato)
+                 |
+                 |   responder( callback, valor ) --
+                 |   adaptarMediciones( mediciones ) --
+                 |   viene( objeto, campo ) --
+                 |   construirURL( host, puerto, ruta ) --
+                 |   formatearFecha( fecha ) --
+                 |
+                 |
+f: FiltroMediciones --> recuperarMedicion() <-- ResultadoLista   // operación (proxy)
+                 |
+                 |   // implementación real (asíncrona, con callbacks)
+                 |
+callbackExito, callbackError --> consultarMediciones() -->   // llama a UNO de ellos
+                 |
+                 ------------------------------------------------------
+```
+
+| Función | Tipo | Entrada | Salida |
+| :--- | :--- | :--- | :--- |
+| `consultarMediciones()` | proxy (`-->`) | `callbackExito`, `callbackError` | (llama a un callback) |
+| `responder()` | interna (`--x`) | `callback`, `valor` | — |
+| `adaptarMediciones()` | interna (`--x`) | `[ Medicion ] Server` | `[ Medicion ] Vista` |
+| `viene()` | interna (`--x`) | `objeto: Medicion, campo: Text` | `B` |
+| `construirURL()` | interna (`--x`) | `host: Text, puerto: N, ruta: Text` | `Text` |
+| `formatearFecha()` | interna (`--x`) | `fecha: Text` | `Text` |
+
 ## Design Clarifications
 
 - El frontend expone **solo lectura**: no hay `guardarMedicion()` en el cliente,
@@ -81,14 +118,3 @@ endpoint `src/communication/recuperarMedicion.php` en vez de a la base de datos.
 - El resultado se entrega a la interfaz con los **mismos campos de dominio** del
   backend (`ok`, `mediciones`, `error`, `clase`); renombrar los campos de la tabla
   concreta es un detalle interno del proxy.
-
-## General Rules
-
-- **Programming Language:** JavaScript (ES5, sin frameworks; se ejecuta también en
-  Node para las pruebas).
-- **Function/Method Headers:** cada función incluye su diseño lógico en un bloque de
-  comentario delimitado por líneas discontinuas (`--------------------`):
-  `entrada --> funcion() --> salida`.
-- **Code Readability:** código claro y autoexplicativo; comentarios inline mínimos.
-- **Automated Testing:** pruebas unitarias de las funciones puras
-  (`pruebasLogicaFake.js`, con Node), sin necesidad del servidor.

@@ -107,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
     // Arranca el servicio. Antes pide los permisos y comprueba el bluetooth: sin eso
     // el servicio arranca pero no ve ningun beacon.
     // ---------------------------------------------------------------------------------------------
-    // v: Vista --> botonArrancarServicioPulsado() -->
+    // v: View --> botonArrancarServicioPulsado() -->
     public void botonArrancarServicioPulsado( View v ) {
         Log.d(ETIQUETA_LOG, " boton arrancar servicio Pulsado" );
 
@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
-    // v: Vista --> botonDetenerServicioPulsado() -->
+    // v: View --> botonDetenerServicioPulsado() -->
     public void botonDetenerServicioPulsado( View v ) {
 
         if ( this.elIntentDelServicio == null ) {
@@ -158,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
-    // v: Vista --> botonBuscarDispositivosBTLEPulsado() -->
+    // v: View --> botonBuscarDispositivosBTLEPulsado() -->
     public void botonBuscarDispositivosBTLEPulsado( View v ) {
         Log.d(AnalizadorBeacons.ETIQUETA_TRAMA, " boton buscar dispositivos BTLE Pulsado" );
         this.buscarTodosLosDispositivosBTLE();
@@ -166,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
-    // v: Vista --> botonBuscarNuestroDispositivoBTLEPulsado() -->
+    // v: View --> botonBuscarNuestroDispositivoBTLEPulsado() -->
     public void botonBuscarNuestroDispositivoBTLEPulsado( View v ) {
         Log.d(AnalizadorBeacons.ETIQUETA_TRAMA, " boton nuestro dispositivo BTLE Pulsado" );
         this.buscarEsteDispositivoBTLE( AnalizadorBeacons.UUID_BEACON );
@@ -174,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------
-    // v: Vista --> botonDetenerBusquedaDispositivosBTLEPulsado() -->
+    // v: View --> botonDetenerBusquedaDispositivosBTLEPulsado() -->
     public void botonDetenerBusquedaDispositivosBTLEPulsado( View v ) {
         Log.d(AnalizadorBeacons.ETIQUETA_TRAMA, " boton detener busqueda dispositivos BTLE Pulsado" );
         this.detenerBusquedaDispositivosBTLE();
@@ -433,7 +433,7 @@ public class MainActivity extends AppCompatActivity {
     // Manda un GET al servidor y enseña el codigo y el cuerpo de la respuesta. Sirve para
     // comprobar que el movil llega al PC (misma wifi) antes de esperar a los beacons.
     // ---------------------------------------------------------------------------------------------
-    // v: Vista --> botonProbarRestPulsado() -->
+    // v: View --> botonProbarRestPulsado() -->
     public void botonProbarRestPulsado( View v ) {
         Log.d(ETIQUETA_LOG, " boton probar REST Pulsado" );
 
