@@ -34,7 +34,7 @@
 // ====== VARIABLES MODIFICABLES ======
 // Valor del proyecto que viaja en el "minor" del iBeacon (el tipo de
 // medicion "prueba" viaja, codificado, en el "major").
-int VALOR_MINOR = 1234;
+int VALOR_MINOR = 13;
 // Cada cuanto empieza un beacon (milisegundos). 
 long INTERVALO_EMISION = 5000;
 // Cuanto dura el anuncio antes de callarse (milisegundos). 
@@ -192,6 +192,7 @@ void loop () {
     //    publicarValor() solo arranca el anuncio y vuelve enseguida 
     //    , para que el micro quede libre y la radio pueda anunciar.
     //    El "minor" del beacon es VALOR_MINOR .
+    //    elPublicador.publicarTemperatura(elmedidor.medirtemperatura,cont, DURACION_ANUNCIO)
     elPublicador.publicarValor( VALOR_MINOR, cont, DURACION_ANUNCIO );
     anunciando = true;
   }
